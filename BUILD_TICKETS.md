@@ -58,7 +58,7 @@ Required:
 
 ## 002 — Implement Codex auth, request construction, SSE parsing, and retries
 
-Status: TODO
+Status: DONE
 
 Build the backend communication layer with fake tests first.
 

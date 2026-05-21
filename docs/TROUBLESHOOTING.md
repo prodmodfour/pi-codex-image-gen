@@ -27,3 +27,15 @@ The config loader reads only:
 Config JSON must be an object with optional `model`, `saveMode`, and `saveDir` keys. `saveMode` must be one of `none`, `project`, `global`, or `custom`.
 
 If `save=custom` (or a resolved config default of `saveMode=custom`) is used, provide `saveDir` either in the tool call, config file, or `PI_CODEX_IMAGE_SAVE_DIR`.
+
+## Backend communication errors
+
+The backend client uses sanitized structured errors:
+
+* missing auth: run Pi `/login` and choose ChatGPT/Codex authentication for `openai-codex`;
+* missing account metadata: re-run `/login` so Codex refreshes ChatGPT account claims;
+* 401/403: the token may be expired, the workspace may not be entitled, or the selected account cannot use Codex image generation;
+* 429: the request was rate limited after bounded retries; wait for usage/rate limits to reset;
+* 5xx/network: retried with bounded exponential backoff; retry later if the failure persists;
+* malformed SSE: the Codex stream shape may have changed; update the parser/tests before relying on live generation;
+* no image data: the backend completed without an `image_generation_call.result`, usually because the model did not call image generation or the request was refused.

@@ -58,9 +58,31 @@ Limitations/blockers:
 * Codex auth extraction, request construction, SSE parsing, retries, image saving, and real Pi execution are still not implemented; those remain scoped to later tickets.
 * The default routing model is set to `gpt-5.5` based on the installed Pi model resolver source. Live image-generation validation has not been attempted and remains reserved for Ticket 007.
 
+## Ticket 002 notes
+
+Completed Codex backend communication work:
+
+* Implemented `src/auth/codexAuth.ts` to normalize Pi-supplied in-memory `openai-codex` auth, decode JWT claims in memory, extract ChatGPT account id metadata, and throw sanitized auth errors without reading credential files.
+* Implemented `src/codex/buildRequest.ts` for the current Codex Responses request shape: default base URL `https://chatgpt.com/backend-api/codex`, `/responses` path, bearer and `ChatGPT-Account-Id` headers, session/thread headers, `store=false`, `stream=true`, one user message, one `image_generation` tool, and `gpt-image-2` with the requested output format.
+* Implemented `src/codex/parseSse.ts` for incremental SSE parsing, split chunks, `[DONE]`, response id, text deltas, usage, backend errors, and final `image_generation_call.result` extraction.
+* Implemented `src/codex/CodexImageClient.ts` with injectable `fetch`, `sleep`, random jitter, retry policy, cancellation handling, bounded 429/5xx/network retries, and sanitized structured errors for HTTP failure, rate limit, backend refusal, missing image data, malformed SSE, cancellation, and transport failure.
+* Added fake backend tests for auth extraction/missing auth, request construction, split SSE parsing, malformed SSE, successful streamed image response, retryable 429, non-retryable 401, backend refusal, no-image response, and cancellation.
+* Updated architecture, extension spec, security, troubleshooting, and usage docs for the backend communication layer and its non-live validation boundaries.
+
+Verification sources/assumptions:
+
+* Checked current OpenAI image-generation docs for Responses `image_generation` tool support, output formats, `gpt-5.5` routing examples, and `gpt-image-2` backend notes.
+* Checked current `openai/codex` source for ChatGPT-authenticated base URL selection (`https://chatgpt.com/backend-api/codex`), `/responses` path, `ChatGPT-Account-Id`, session/thread headers, request body fields, and stream event handling.
+
+Limitations/blockers:
+
+* No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
+* The Pi tool registration still returns the skeleton not-implemented response until Ticket 004 wires the client into the extension.
+* Image saving and Pi result formatting remain scoped to Ticket 003.
+
 ## Last completed ticket
 
-Ticket 001 — Implement public tool API, validation, and config.
+Ticket 002 — Implement Codex auth, request construction, SSE parsing, and retries.
 
 ## Last quality gates
 
@@ -68,4 +90,4 @@ Ticket 001 — Implement public tool API, validation, and config.
 
 ## Next recommended ticket
 
-Ticket 002 — Implement Codex auth, request construction, SSE parsing, and retries.
+Ticket 003 — Implement image save modes and Pi tool result formatting.

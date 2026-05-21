@@ -2,7 +2,7 @@
 
 The package registers one primary tool: `codex_generate_image`.
 
-The backend request/save pipeline is implemented in later build tickets. The public input contract and config validation are already fixed so prompts and configs can be documented and tested consistently.
+The public input contract, config validation, and fake-tested Codex request/streaming layer are implemented. Pi execution wiring, image saving, and final result formatting are completed in later build tickets, so the registered tool still returns the skeleton response until those tickets land.
 
 ## Tool parameters
 

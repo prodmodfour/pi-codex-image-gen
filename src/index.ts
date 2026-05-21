@@ -48,3 +48,51 @@ export type {
   CodexImageGenConfigPaths,
   CodexImageGenLoadedConfig,
 } from "./config/codexImageGenConfig.ts";
+export {
+  CodexAuthError,
+  resolveCodexAuth,
+} from "./auth/codexAuth.ts";
+export type {
+  CodexAuthClaimsSummary,
+  CodexAuthErrorCode,
+  CodexAuthObjectInput,
+  CodexAuthSession,
+} from "./auth/codexAuth.ts";
+export {
+  CODEX_IMAGE_GENERATION_INSTRUCTIONS,
+  CODEX_IMAGE_GEN_USER_AGENT,
+  CODEX_RESPONSES_BASE_URL,
+  CODEX_RESPONSES_PATH,
+  buildCodexImageRequest,
+} from "./codex/buildRequest.ts";
+export type {
+  BuildCodexImageRequestOptions,
+  BuiltCodexImageRequest,
+  CodexImageGenerationToolRequest,
+  CodexResponsesMessageInput,
+  CodexResponsesRequestBody,
+} from "./codex/buildRequest.ts";
+export {
+  CodexSseParseError,
+  CodexSseParser,
+  parseCodexImageSse,
+} from "./codex/parseSse.ts";
+export type {
+  CodexBackendErrorInfo,
+  CodexImageGenerationCall,
+  CodexSseParseErrorCode,
+  CodexSseParseResult,
+} from "./codex/parseSse.ts";
+export {
+  DEFAULT_CODEX_IMAGE_CLIENT_RETRY_POLICY,
+  CodexImageClient,
+  CodexImageClientError,
+} from "./codex/CodexImageClient.ts";
+export type {
+  CodexImageClientErrorCode,
+  CodexImageClientErrorDetails,
+  CodexImageClientGenerateOptions,
+  CodexImageClientOptions,
+  CodexImageClientRetryPolicy,
+  CodexImageGenerationResult,
+} from "./codex/CodexImageClient.ts";

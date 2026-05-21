@@ -70,6 +70,15 @@ The implementation should use Pi's current model registry/context method to retr
 
 ## Image-generation backend
 
-The implementation guide contains a candidate Responses/SSE contract. Verify it during tickets 002 and 007.
+Ticket 002 verified the non-live request assumptions against current OpenAI image-generation docs and current `openai/codex` source:
+
+* ChatGPT-authenticated Codex Responses traffic uses `https://chatgpt.com/backend-api/codex` as the default base URL and appends `/responses`.
+* Requests use `POST`, `Accept: text/event-stream`, `Content-Type: application/json`, `Authorization: Bearer <Pi-supplied token>`, and `ChatGPT-Account-Id` when account metadata is available.
+* Session/thread headers may be sent as `session_id`, `session-id`, `thread_id`, `thread-id`, and `x-client-request-id`.
+* The body uses a mainline routing model such as `gpt-5.5`, `store: false`, `stream: true`, one user message, one `image_generation` tool declaration, `parallel_tool_calls: false`, and low text verbosity.
+* The image-generation tool requests `model: "gpt-image-2"`, `action: "generate"`, and the normalized `output_format`.
+* The streaming parser expects a final event shaped like `response.output_item.done` with `item.type = "image_generation_call"` and base64 image data in `item.result`. It also tolerates unknown events and extracts response id, text deltas, usage, and backend error events.
+
+Ticket 007 must still validate these assumptions against a real authenticated Pi/Codex session. If live validation shows a different current event shape or endpoint contract, update `src/codex/*`, tests, and this document.
 
 If current Codex provides a safer public SDK/CLI method for image generation, prefer that over hardcoding private endpoint details, as long as it still uses ChatGPT/Codex auth rather than API-key billing.

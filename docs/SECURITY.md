@@ -18,6 +18,8 @@ It must not:
 * commit auth material;
 * fall back to `OPENAI_API_KEY` for the default path.
 
+The auth module may decode the Pi-supplied bearer token in memory to extract non-secret routing metadata such as the ChatGPT account id. It does not verify token signatures and must not persist, print, or include token material in errors.
+
 ## Billing and usage boundaries
 
 When authenticated through Codex/ChatGPT, image generation may consume the user's included Codex/ChatGPT usage. The extension cannot and must not bypass usage, rate, workspace, entitlement, or safety limits.
@@ -41,7 +43,7 @@ The quality gate must reject committed generated images and private Pi config.
 
 Codex backend event shapes can change. The parser must tolerate unknown events but fail safely if no image result is returned.
 
-Backend error bodies may contain private prompt or account context. Keep user-facing errors concise and sanitized.
+Backend error bodies may contain private prompt or account context. Keep user-facing errors concise and sanitized. The HTTP client should report status, retryability, request ids, and high-level backend error codes without dumping full response bodies or request payloads.
 
 ## Local execution risks
 
