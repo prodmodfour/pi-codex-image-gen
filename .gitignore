@@ -1,0 +1,38 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Package artifacts
+*.tgz
+npm-debug.log*
+
+# Local/private config
+.env
+.env.*
+!.env.example
+.pi/settings.json
+.pi/extensions/*.json
+~/.codex/auth.json
+
+# Generated images and temporary files
+.pi/generated-images/
+.pi/**/generated-images/
+generated-images/
+.tmp/
+tmp/
+*.generated.png
+*.generated.jpg
+*.generated.jpeg
+*.generated.webp
+
+# Autonomous build logs and locks
+.agent/logs/
+.agent/build-loop.lock/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

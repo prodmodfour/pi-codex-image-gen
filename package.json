@@ -1,0 +1,59 @@
+{
+  "name": "pi-codex-image-gen",
+  "version": "0.0.0",
+  "description": "Autonomous-build scaffold for a Pi extension that generates images through Codex ChatGPT auth.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-skill",
+    "codex",
+    "image-generation",
+    "chatgpt"
+  ],
+  "files": [
+    "extensions",
+    "skills",
+    "src",
+    "docs",
+    "scripts/check-package-contents.mjs",
+    "scripts/smoke-real-codex-image.mjs",
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE.md",
+    "SECURITY.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/codex-image-gen.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "quality": "bash scripts/quality-gate.sh",
+    "check:shell": "bash scripts/check-shell-syntax.sh",
+    "guard:secrets": "bash scripts/check-no-secrets.sh",
+    "guard:generated": "bash scripts/check-no-generated-private-files.sh",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "build": "npm run typecheck",
+    "pack:check": "node scripts/check-package-contents.mjs",
+    "smoke:codex-image": "node scripts/smoke-real-codex-image.mjs"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.19",
+    "typescript": "^5.7.3"
+  }
+}
