@@ -10,6 +10,9 @@ import {
   resolveCodexAuth,
 } from '../src/auth/codexAuth.ts';
 import {
+  CODEX_IMAGE_GEN_OUTPUT_FORMATS,
+} from '../src/tool/codexImageGenApi.ts';
+import {
   CODEX_RESPONSES_BASE_URL,
   buildCodexImageRequest,
 } from '../src/codex/buildRequest.ts';
@@ -133,6 +136,45 @@ test('rejects missing or malformed auth without exposing token material', () => 
   );
 });
 
+test('rejects malformed JWT payloads and missing or malformed ChatGPT account claims', () => {
+  const malformedPayloadJwt = [
+    Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url'),
+    Buffer.from('{not valid json').toString('base64url'),
+    Buffer.from('signature').toString('base64url'),
+  ].join('.');
+
+  assert.throws(
+    () => resolveCodexAuth(malformedPayloadJwt),
+    (error) => {
+      assert.ok(error instanceof CodexAuthError);
+      assert.equal(error.code, 'CODEX_IMAGE_GEN_MALFORMED_AUTH');
+      assert.equal(error.message.includes(malformedPayloadJwt), false);
+      return true;
+    },
+  );
+
+  const missingAccountJwt = fakeJwt({ sub: 'user_without_account', exp: 4_102_444_800 });
+  assert.throws(
+    () => resolveCodexAuth(missingAccountJwt),
+    (error) => {
+      assert.ok(error instanceof CodexAuthError);
+      assert.equal(error.code, 'CODEX_IMAGE_GEN_MISSING_ACCOUNT');
+      assert.equal(error.message.includes(missingAccountJwt), false);
+      return true;
+    },
+  );
+
+  assert.throws(
+    () => resolveCodexAuth({ token: fakeAuth().bearerToken, accountId: 'acct_bad\nclaim' }),
+    (error) => {
+      assert.ok(error instanceof CodexAuthError);
+      assert.equal(error.code, 'CODEX_IMAGE_GEN_MALFORMED_AUTH');
+      assert.equal(error.message.includes('acct_bad'), false);
+      return true;
+    },
+  );
+});
+
 test('builds current Codex Responses image-generation request shape', () => {
   const auth = fakeAuth();
   const request = buildCodexImageRequest({
@@ -163,6 +205,17 @@ test('builds current Codex Responses image-generation request shape', () => {
     action: 'generate',
   }]);
   assert.equal(JSON.parse(request.init.body).tools[0].model, BACKEND_IMAGE_MODEL);
+});
+
+test('builds image-generation requests with each supported output format', () => {
+  const auth = fakeAuth();
+
+  for (const outputFormat of CODEX_IMAGE_GEN_OUTPUT_FORMATS) {
+    const input = { ...normalizedInput, outputFormat };
+    const request = buildCodexImageRequest({ input, auth });
+    assert.equal(request.body.tools[0].output_format, outputFormat);
+    assert.equal(JSON.parse(request.init.body).tools[0].output_format, outputFormat);
+  }
 });
 
 test('parses split SSE chunks with text, usage, response id, and final image call', () => {
@@ -244,26 +297,28 @@ test('CodexImageClient retries transient 429 responses before parsing success', 
 });
 
 test('CodexImageClient does not retry non-retryable 401/403 auth failures', async () => {
-  let attempts = 0;
-  const client = new CodexImageClient({
-    fetch: async () => {
-      attempts += 1;
-      return new Response('unauthorized', { status: 401, headers: { 'x-request-id': 'req_auth' } });
-    },
-    retryPolicy: { maxAttempts: 3, jitterRatio: 0 },
-  });
+  for (const status of [401, 403]) {
+    let attempts = 0;
+    const client = new CodexImageClient({
+      fetch: async () => {
+        attempts += 1;
+        return new Response('unauthorized', { status, headers: { 'x-request-id': `req_auth_${status}` } });
+      },
+      retryPolicy: { maxAttempts: 3, jitterRatio: 0 },
+    });
 
-  await assert.rejects(
-    () => client.generateImage(normalizedInput, fakeAuth()),
-    (error) => {
-      assert.ok(error instanceof CodexImageClientError);
-      assert.equal(error.code, 'CODEX_IMAGE_GEN_HTTP_FAILURE');
-      assert.equal(error.details.status, 401);
-      assert.equal(error.details.requestId, 'req_auth');
-      return true;
-    },
-  );
-  assert.equal(attempts, 1);
+    await assert.rejects(
+      () => client.generateImage(normalizedInput, fakeAuth()),
+      (error) => {
+        assert.ok(error instanceof CodexImageClientError);
+        assert.equal(error.code, 'CODEX_IMAGE_GEN_HTTP_FAILURE');
+        assert.equal(error.details.status, status);
+        assert.equal(error.details.requestId, `req_auth_${status}`);
+        return true;
+      },
+    );
+    assert.equal(attempts, 1);
+  }
 });
 
 test('CodexImageClient throws sanitized errors for backend refusal and no-image success', async () => {
@@ -312,6 +367,24 @@ test('CodexImageClient throws sanitized errors for backend refusal and no-image 
   );
 });
 
+test('CodexImageClient maps malformed streamed SSE JSON to a sanitized client error', async () => {
+  const client = new CodexImageClient({
+    fetch: async () => responseFromChunks(['data: {"type": "response.created"\n\n']),
+    retryPolicy: { maxAttempts: 1, jitterRatio: 0 },
+  });
+
+  await assert.rejects(
+    () => client.generateImage(normalizedInput, fakeAuth()),
+    (error) => {
+      assert.ok(error instanceof CodexImageClientError);
+      assert.equal(error.code, 'CODEX_IMAGE_GEN_MALFORMED_SSE');
+      assert.equal(error.details.attempts, 1);
+      assert.equal(error.message.includes(normalizedInput.prompt), false);
+      return true;
+    },
+  );
+});
+
 test('CodexImageClient reports cancellation without making a backend request', async () => {
   const controller = new AbortController();
   controller.abort();
@@ -332,4 +405,25 @@ test('CodexImageClient reports cancellation without making a backend request', a
     },
   );
   assert.equal(attempts, 0);
+});
+
+test('CodexImageClient reports cancellation when fetch is aborted in flight', async () => {
+  let attempts = 0;
+  const client = new CodexImageClient({
+    fetch: async () => {
+      attempts += 1;
+      throw new DOMException('aborted by fake fetch', 'AbortError');
+    },
+    retryPolicy: { maxAttempts: 3, jitterRatio: 0 },
+  });
+
+  await assert.rejects(
+    () => client.generateImage(normalizedInput, fakeAuth()),
+    (error) => {
+      assert.ok(error instanceof CodexImageClientError);
+      assert.equal(error.code, 'CODEX_IMAGE_GEN_CANCELLED');
+      return true;
+    },
+  );
+  assert.equal(attempts, 1);
 });

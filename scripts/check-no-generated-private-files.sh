@@ -17,24 +17,42 @@ from pathlib import Path
 root = Path('.')
 forbidden_exact = {
     '.env',
-    '.pi/settings.json',
+    '.npmrc',
 }
 forbidden_prefixes = {
     'node_modules/',
-    '.agent/logs/',
-    '.agent/build-loop.lock/',
-    '.pi/generated-images/',
+    '.agent/',
+    '.pi/',
+    '.codex/',
     'generated-images/',
     'coverage/',
     'dist/',
     'build/',
+    '.tmp/',
+    'tmp/',
 }
 forbidden_suffixes = {
     '.tgz',
+    '.log',
+    '.pem',
+    '.p12',
+    '.pfx',
+    '.key',
     '.generated.png',
     '.generated.jpg',
     '.generated.jpeg',
     '.generated.webp',
+}
+forbidden_names = {
+    'auth.json',
+    'credentials.json',
+    'credential.json',
+    'access-token.json',
+    'refresh-token.json',
+    'id_rsa',
+    'id_dsa',
+    'id_ecdsa',
+    'id_ed25519',
 }
 image_suffixes = {'.png', '.jpg', '.jpeg', '.webp'}
 allowed_image_prefixes = {'docs/', 'test/fixtures/'}
@@ -48,6 +66,9 @@ for path in root.rglob('*'):
         posix = posix[2:]
     if posix.startswith('.git/'):
         continue
+
+    lower_name = path.name.lower()
+    lower_posix = posix.lower()
     if posix in forbidden_exact:
         violations.append(posix)
         continue
@@ -57,7 +78,10 @@ for path in root.rglob('*'):
     if '/generated-images/' in f'/{posix}/':
         violations.append(posix)
         continue
-    if any(posix.endswith(suffix) for suffix in forbidden_suffixes):
+    if lower_name in forbidden_names:
+        violations.append(posix)
+        continue
+    if any(lower_posix.endswith(suffix) for suffix in forbidden_suffixes):
         violations.append(posix)
         continue
     if path.suffix.lower() in image_suffixes and not any(posix.startswith(prefix) for prefix in allowed_image_prefixes):

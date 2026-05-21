@@ -130,7 +130,7 @@ Required:
 
 ## 005 — Strengthen tests, guards, and packaging checks
 
-Status: TODO
+Status: DONE
 
 Make the package hard to regress.
 

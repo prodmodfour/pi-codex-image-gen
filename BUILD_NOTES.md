@@ -116,13 +116,35 @@ Limitations/blockers:
 * No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
 * Backend request/event assumptions still need real authenticated validation before release.
 
+## Ticket 005 notes
+
+Completed regression/guard/packaging hardening:
+
+* Added backend regression tests for malformed JWT payloads, missing/malformed ChatGPT account claims, all supported output-format request selections, non-retryable 401 and 403 failures, malformed SSE mapped through the client, and fetch abort cancellation.
+* Added Pi execution coverage for missing `openai-codex` credentials that verifies the client is not called without auth.
+* Added package dry-run tests that verify required extension, skill, docs, source, tests, and scripts are included while generated images, private runtime state, logs, credentials, build output, package tarballs, and dependencies are excluded.
+* Strengthened the default no-API-key coverage by checking package dependencies and runtime source for `OPENAI_API_KEY` fallback usage.
+* Updated the npm `files` allowlist so tests and operational scripts are part of the dry-run validated package contents.
+* Strengthened `scripts/check-package-contents.mjs` to enforce required files by category, reject forbidden package paths, reject OpenAI API SDK dependencies, and scan packed runtime source for API-key fallback references.
+* Strengthened `scripts/check-no-secrets.sh` with broader token/private-key patterns, code-only raw token-field checks, Codex auth-file path checks, and runtime API-key fallback detection.
+* Strengthened `scripts/check-no-generated-private-files.sh` to block `.agent/`, `.pi/`, `.codex/`, generated images, logs, credentials, build output, temp directories, package tarballs, and private-key material.
+* Updated release docs to describe the expanded package dry-run expectations.
+
+Verification:
+
+* `bash scripts/quality-gate.sh` passed on 2026-05-21.
+
+Limitations/blockers:
+
+* No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 004 — Wire the Pi extension, help surface, and imagegen skill.
+Ticket 005 — Strengthen tests, guards, and packaging checks.
 
 ## Last quality gates
 
@@ -130,4 +152,4 @@ Ticket 004 — Wire the Pi extension, help surface, and imagegen skill.
 
 ## Next recommended ticket
 
-Ticket 005 — Strengthen tests, guards, and packaging checks.
+Ticket 006 — Complete docs and operational runbooks.

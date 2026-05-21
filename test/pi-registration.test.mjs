@@ -10,6 +10,9 @@ import {
   CODEX_IMAGE_GEN_TOOL_NAME,
 } from '../src/constants.ts';
 import {
+  CodexAuthError,
+} from '../src/auth/codexAuth.ts';
+import {
   CODEX_IMAGE_GEN_HELP_COMMAND_NAME,
   CODEX_IMAGE_GEN_HELP_TEXT,
   CODEX_IMAGE_GEN_TOOL_LABEL,
@@ -218,5 +221,50 @@ test('registered tool execution wires config, auth, client, save, and output mod
       revisedPrompt: 'A concise fake test icon.',
       usage: { input_tokens: 4, output_tokens: 5, total_tokens: 9 },
     });
+  });
+});
+
+test('registered tool fails safely when openai-codex credentials are missing', async () => {
+  await withTempRoot(async ({ cwd, agentDir }) => {
+    let clientCalled = false;
+    const tool = createCodexImageGenToolDefinition({
+      client: {
+        async generateImage() {
+          clientCalled = true;
+          throw new Error('client should not run without credentials');
+        },
+      },
+      async loadConfig() {
+        return {
+          config: { model: 'gpt-test-routing', saveMode: 'none' },
+          paths: {
+            globalPath: join(agentDir, 'extensions', 'codex-image-gen.json'),
+            projectPath: join(cwd, '.pi', 'extensions', 'codex-image-gen.json'),
+          },
+          loadedFiles: [],
+        };
+      },
+    });
+    const { ctx, requestedProviders } = createFakeContext({ cwd, agentDir, token: null });
+
+    await assert.rejects(
+      () => tool.execute(
+        'tool-call-missing-auth',
+        { prompt: 'flat credential test icon, no text' },
+        undefined,
+        undefined,
+        ctx,
+      ),
+      (error) => {
+        assert.ok(error instanceof CodexAuthError);
+        assert.equal(error.code, 'CODEX_IMAGE_GEN_MISSING_AUTH');
+        assert.match(error.message, /openai-codex credentials/i);
+        return true;
+      },
+    );
+
+    assert.equal(requestedProviders.length, 1);
+    assert.equal(requestedProviders[0], CODEX_IMAGE_GEN_PROVIDER);
+    assert.equal(clientCalled, false);
   });
 });
