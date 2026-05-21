@@ -7,14 +7,18 @@ Live validation may consume Codex/ChatGPT usage. Do not commit generated images,
 ## Current validation status
 
 ```text
-Live validation: PENDING
-Date:
-Environment summary:
-Package load method:
-Prompt category:
-Save modes checked:
-Generated files removed or ignored:
-Blocker if any:
+Live validation: PASS
+Date: 2026-05-21
+Environment summary: node v22.19.0, npm 10.9.3, pi 0.75.4, codex-cli 0.132.0; Codex CLI status reported ChatGPT login and Pi openai-codex text probe succeeded.
+Package load method: pi -e . in non-interactive JSON mode with openai-codex/gpt-5.5.
+Prompt category: harmless test icon / abstract placeholder.
+Save modes checked: global, none.
+Inline image observed: yes for both live tool calls.
+Saved path checked: yes for save=global; not applicable for save=none.
+Generated files removed or ignored: yes; the save=global file was removed after existence verification and save=none wrote no generated file.
+Quality gate after cleanup: pass.
+Smoke script: npm run smoke:codex-image completed with the guarded skip message.
+Blocker if any: none.
 ```
 
 Ticket 007 must update this section with a sanitized PASS, FAIL, or BLOCKED summary.

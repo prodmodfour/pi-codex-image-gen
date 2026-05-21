@@ -162,18 +162,42 @@ Limitations/blockers:
 * No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
 * `scripts/smoke-real-codex-image.mjs` remains a guarded hook rather than a real consuming smoke test; Ticket 007 may implement or bypass it according to the live-validation checklist.
 
+## Ticket 007 notes
+
+Completed live Pi/Codex image-generation validation:
+
+* Verified local tooling: node v22.19.0, npm 10.9.3, pi 0.75.4, and codex-cli 0.132.0.
+* Verified auth state safely without reading credential files: `codex login status` reported ChatGPT login, and a Pi `openai-codex/gpt-5.5` text probe returned successfully.
+* Loaded this package locally with `pi -e .` in non-interactive JSON mode and restricted tools to the extension image tool plus no built-ins.
+* Ran two harmless live prompts that explicitly called `codex_generate_image`:
+  * `save=global`, `outputFormat=png`: the tool was invoked, inline `image/png` content was observed, details reported `openai-codex`, routing model `gpt-5.5`, backend `gpt-image-2`, response/image ids, usage metadata, and a saved path. The saved file existed and was removed after verification.
+  * `save=none`, `outputFormat=png`: the tool was invoked, inline `image/png` content was observed, details reported `saveMode=none`, no saved path was present, and generated-image file counts did not increase.
+* Ran `npm run smoke:codex-image`; the current guarded smoke hook skipped without consuming additional image usage.
+* Confirmed generated/private-file guard passed after live cleanup.
+* Updated `docs/MANUAL_VALIDATION.md` with the sanitized PASS record. No raw logs, generated images, tokens, credentials, or private prompt data were committed.
+
+Verification:
+
+* `bash scripts/quality-gate.sh` passed on 2026-05-21 before live validation.
+* `bash scripts/quality-gate.sh` passed on 2026-05-21 after live cleanup and documentation updates.
+
+Limitations/blockers:
+
+* No live blocker remains for Ticket 007.
+* Live validation covered `png` with `save=global` and `save=none`; optional live `jpeg`/`webp` spot checks were skipped to conserve usage and remain covered by fake/unit tests.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 006 — Complete docs and operational runbooks.
+Ticket 007 — Perform live Pi/Codex image-generation validation.
 
 ## Last quality gates
 
-2026-05-21 — `bash scripts/quality-gate.sh` passed.
+2026-05-21 — `bash scripts/quality-gate.sh` passed before and after live validation cleanup.
 
 ## Next recommended ticket
 
-Ticket 007 — Perform live Pi/Codex image-generation validation.
+Ticket 008 — Release readiness and repository polish.

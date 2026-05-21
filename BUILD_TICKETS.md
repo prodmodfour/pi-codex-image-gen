@@ -181,7 +181,7 @@ Required docs:
 
 ## 007 — Perform live Pi/Codex image-generation validation
 
-Status: TODO
+Status: DONE
 
 Use the permissive environment to do real validation.
 
