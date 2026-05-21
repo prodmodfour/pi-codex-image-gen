@@ -10,7 +10,11 @@ cd pi-codex-image-gen
 npm install
 bash scripts/quality-gate.sh
 pi -e .
+# In Pi, optional help:
+/codex-image-gen
 ```
+
+The tool reads `openai-codex` credentials only through Pi's runtime model registry. Authenticate with Pi `/login` and choose ChatGPT/Codex before attempting live image generation.
 
 ## Project-local install
 

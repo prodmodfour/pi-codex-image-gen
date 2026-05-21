@@ -96,13 +96,33 @@ Limitations/blockers:
 * The Pi tool registration still returns the skeleton not-implemented response until Ticket 004 wires validation, auth, client, saving, and formatting into the extension.
 * No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
 
+## Ticket 004 notes
+
+Completed Pi wiring/help/skill work:
+
+* Implemented `src/pi/registerCodexImageGenTool.ts` so `codex_generate_image` now loads config, normalizes input, retrieves in-memory `openai-codex` auth with `ctx.modelRegistry.getApiKeyForProvider("openai-codex")`, calls the Codex image client, saves according to the selected save mode, and formats the Pi text/image result.
+* Kept `extensions/codex-image-gen.ts` as a thin entrypoint and expanded the local Pi contract test seam for commands, UI notifications, session ids, and agent-dir hints.
+* Added `/codex-image-gen` help command registration when `pi.registerCommand` is available; it displays parameters, save modes, and safety notes without being required for tool use.
+* Added Pi fake API tests for tool metadata, command registration/help display, config/auth/client/save/output execution flow, and skill frontmatter.
+* Added Agent Skills frontmatter to `skills/imagegen/SKILL.md` with concise guidance to use the tool only for explicit image-generation requests.
+* Updated README and docs for the wired execution pipeline, help command, agent-dir/session handling, usage, installation, architecture, extension spec, and troubleshooting.
+
+Verification:
+
+* `bash scripts/quality-gate.sh` passed on 2026-05-21. A first local attempt failed because manually installed `node_modules/` existed before the gate; after removing it, the gate created and cleaned dependencies normally and passed.
+
+Limitations/blockers:
+
+* No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
+* Backend request/event assumptions still need real authenticated validation before release.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 003 — Implement image save modes and Pi tool result formatting.
+Ticket 004 — Wire the Pi extension, help surface, and imagegen skill.
 
 ## Last quality gates
 
@@ -110,4 +130,4 @@ Ticket 003 — Implement image save modes and Pi tool result formatting.
 
 ## Next recommended ticket
 
-Ticket 004 — Wire the Pi extension, help surface, and imagegen skill.
+Ticket 005 — Strengthen tests, guards, and packaging checks.

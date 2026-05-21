@@ -25,10 +25,22 @@ export interface PiSessionManager {
   getSessionId(): string;
 }
 
+export interface PiExtensionUi {
+  notify(message: string, type?: "info" | "warning" | "error"): void;
+}
+
 export interface PiToolExecutionContext {
   cwd: string;
+  agentDir?: string;
+  getAgentDir?: () => string | undefined;
+  hasUI?: boolean;
+  ui?: PiExtensionUi;
   modelRegistry: PiModelRegistry;
   sessionManager: PiSessionManager;
+}
+
+export interface PiCommandContext extends PiToolExecutionContext {
+  waitForIdle?(): Promise<void>;
 }
 
 export interface PiToolUpdate {
@@ -45,7 +57,7 @@ export interface PiToolDefinition<TParams = unknown, TDetails = Record<string, u
   promptSnippet?: string;
   promptGuidelines?: string[];
   parameters: unknown;
-  executionMode?: "parallel" | "serial";
+  executionMode?: "parallel" | "sequential";
   execute(
     toolCallId: string,
     params: TParams,
@@ -55,8 +67,30 @@ export interface PiToolDefinition<TParams = unknown, TDetails = Record<string, u
   ): Promise<PiToolResult<TDetails>> | PiToolResult<TDetails>;
 }
 
+export interface PiCommandDefinition {
+  description?: string;
+  handler(args: string, ctx: PiCommandContext): Promise<void> | void;
+}
+
+export interface PiMessageOptions {
+  triggerTurn?: boolean;
+  deliverAs?: "steer" | "followUp" | "nextTurn";
+}
+
+export interface PiCustomMessage<TDetails = Record<string, unknown>> {
+  customType: string;
+  content: string | PiToolContent[];
+  display: boolean;
+  details?: TDetails;
+}
+
 export interface PiExtensionApi {
   registerTool<TParams = unknown, TDetails = Record<string, unknown>>(
     definition: PiToolDefinition<TParams, TDetails>,
+  ): void;
+  registerCommand?(name: string, definition: PiCommandDefinition): void;
+  sendMessage?<TDetails = Record<string, unknown>>(
+    message: PiCustomMessage<TDetails>,
+    options?: PiMessageOptions,
   ): void;
 }

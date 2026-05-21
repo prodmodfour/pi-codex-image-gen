@@ -2,7 +2,9 @@
 
 The package registers one primary tool: `codex_generate_image`.
 
-The public input contract, config validation, fake-tested Codex request/streaming layer, save-mode resolver, and Pi result formatter are implemented. Pi execution wiring is completed in a later build ticket, so the registered tool still returns the skeleton response until that wiring lands.
+The public input contract, config validation, fake-tested Codex request/streaming layer, save-mode resolver, Pi result formatter, and Pi execution wiring are implemented. Live backend validation is still reserved for the dedicated live-validation ticket.
+
+The extension also registers `/codex-image-gen` when the current Pi command API is available. That help command summarizes parameters, save modes, and safety boundaries inside Pi.
 
 ## Tool parameters
 
@@ -78,7 +80,7 @@ Supported `saveMode` values are `none`, `project`, `global`, and `custom`. If th
 
 ## Save locations and result shape
 
-When wired into Pi, the save module resolves locations as follows:
+During Pi tool execution, the save module resolves locations as follows:
 
 * `none`: no file is written;
 * `project`: `<cwd>/.pi/generated-images/<sanitized-session-id>/<sanitized-image-id>.<format>`;

@@ -14,6 +14,12 @@ Expected topics:
 * generated image not found;
 * package-name publishing conflict.
 
+## Package load and help command
+
+Load the package with `pi -e .` from the repository root or install it with `pi install -l /absolute/path/to/pi-codex-image-gen`. The extension should register the `codex_generate_image` tool. If your Pi runtime supports extension commands, `/codex-image-gen` shows parameters, save modes, and safety notes.
+
+If the command is absent but the tool is present, command registration may be unavailable in that Pi runtime; this does not block tool use. If the tool itself is absent, run `/reload`, check that `package.json` includes `pi.extensions`, and inspect Pi's startup extension errors without sharing private logs or credentials.
+
 ## Config validation errors
 
 The config loader reads only:

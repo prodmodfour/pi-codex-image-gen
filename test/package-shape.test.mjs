@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const imagegenSkill = await readFile(new URL('../skills/imagegen/SKILL.md', import.meta.url), 'utf8');
 
 test('package has the requested Pi package identity', () => {
   assert.equal(packageJson.name, 'pi-codex-image-gen');
@@ -15,6 +16,12 @@ test('package has the requested Pi package identity', () => {
 test('package declares Pi extension and skill resources', () => {
   assert.deepEqual(packageJson.pi.extensions, ['./extensions/codex-image-gen.ts']);
   assert.deepEqual(packageJson.pi.skills, ['./skills']);
+});
+
+test('imagegen skill has Pi-compatible frontmatter and guidance', () => {
+  assert.match(imagegenSkill, /^---\nname: imagegen\ndescription: /);
+  assert.match(imagegenSkill, /codex_generate_image/);
+  assert.match(imagegenSkill, /explicitly asks/);
 });
 
 test('package exposes expected quality scripts', () => {

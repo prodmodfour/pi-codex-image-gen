@@ -38,6 +38,14 @@ description: Generate an image through Codex using existing openai-codex auth.
 
 The prompt guidelines must say to use it only for explicit image-generation requests.
 
+Optional command:
+
+```text
+/codex-image-gen
+```
+
+The help command is registered when `pi.registerCommand` is available and displays the public parameters, save modes, and safety notes. If a future Pi runtime removes command support, the tool still registers without the command.
+
 Public parameters:
 
 | Parameter | Required | Values/defaults |
@@ -66,7 +74,7 @@ Provider name:
 openai-codex
 ```
 
-The implementation should use Pi's current model registry/context method to retrieve this provider's token. The local contract in `src/pi/piExtensionContract.ts` is only a test seam and should be updated if Pi's real API differs.
+The implementation uses Pi's current model registry/context method, `ctx.modelRegistry.getApiKeyForProvider("openai-codex")`, to retrieve this provider's in-memory token at tool-call time. The local contract in `src/pi/piExtensionContract.ts` is only a test seam and should be updated if Pi's real API differs.
 
 ## Image-generation backend
 
@@ -80,6 +88,8 @@ Ticket 002 verified the non-live request assumptions against current OpenAI imag
 * The streaming parser expects a final event shaped like `response.output_item.done` with `item.type = "image_generation_call"` and base64 image data in `item.result`. It also tolerates unknown events and extracts response id, text deltas, usage, and backend error events.
 
 ## Save and result formatting
+
+The Pi execution wiring passes `ctx.cwd`, `ctx.sessionManager.getSessionId()`, and Pi's agent dir when available (falling back to `PI_CODING_AGENT_DIR` or `~/.pi/agent`) into the save/config layers.
 
 The current save contract is:
 

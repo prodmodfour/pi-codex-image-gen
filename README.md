@@ -15,11 +15,11 @@ scripts/build-loop.sh     ticket-driven autonomous build loop
 scripts/run-agent.sh      Pi wrapper used by the loop
 scripts/quality-gate.sh   non-live project quality gate
 package.json              initial Pi package metadata and scripts
-extensions/               Pi extension entrypoint skeleton
-src/                      initial TypeScript skeleton and local Pi contract
-test/                     initial package-shape tests
+extensions/               thin Pi extension entrypoint
+src/                      TypeScript implementation modules and local Pi contract
+test/                     package-shape, unit, and fake integration tests
 docs/                     implementation guide, runbooks, and safety docs
-skills/imagegen/SKILL.md  initial skill helper
+skills/imagegen/SKILL.md  image generation skill helper
 ```
 
 ## Start the autonomous build
@@ -81,6 +81,8 @@ Config files are JSON objects with optional `model`, `saveMode`, and `saveDir` k
 * env: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, `PI_CODEX_IMAGE_SAVE_DIR`
 
 The config loader validates bad values with structured, sanitized errors and does not read credential files.
+
+When loaded by Pi, the extension registers `codex_generate_image` and an optional `/codex-image-gen` help command. Tool execution now wires input validation, config loading, Pi `openai-codex` auth retrieval, Codex client streaming, save-mode handling, and Pi text/image result formatting. Live backend validation is still reserved for Ticket 007.
 
 Save modes resolve to documented local directories: `global` writes under the Pi agent dir, `project` writes under `<cwd>/.pi/generated-images/`, `custom` writes under the configured directory, and `none` skips disk writes. The formatter returns a concise text summary plus inline image content with the correct MIME type.
 

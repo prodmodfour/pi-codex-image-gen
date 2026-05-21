@@ -108,7 +108,7 @@ Required:
 
 ## 004 — Wire the Pi extension, help surface, and imagegen skill
 
-Status: TODO
+Status: DONE
 
 Connect implementation to Pi.
 
