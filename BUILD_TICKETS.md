@@ -158,7 +158,7 @@ Required:
 
 ## 006 — Complete docs and operational runbooks
 
-Status: TODO
+Status: DONE
 
 Write production-quality docs.
 

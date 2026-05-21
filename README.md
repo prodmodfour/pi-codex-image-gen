@@ -1,97 +1,180 @@
-# pi-codex-image-gen autonomous build system
+# pi-codex-image-gen
 
-This repository is a ready-to-run autonomous build scaffold for a Pi package named `pi-codex-image-gen`.
-
-The intended final package registers a Pi tool named `codex_generate_image` that generates images through the user's existing Pi/OpenAI Codex ChatGPT authentication instead of requiring OpenAI Platform API-key billing.
-
-## What is included
+`pi-codex-image-gen` is a local, single-user [Pi](https://pi.dev/) package that registers one primary tool:
 
 ```text
-AGENTS.md                 autonomous agent rules and permissions
-PROJECT_BRIEF.md          project-specific brief for the build agent
-BUILD_TICKETS.md          ordered autonomous work queue
-BUILD_NOTES.md            running state, blockers, and validation notes
-scripts/build-loop.sh     ticket-driven autonomous build loop
-scripts/run-agent.sh      Pi wrapper used by the loop
-scripts/quality-gate.sh   non-live project quality gate
-package.json              initial Pi package metadata and scripts
-extensions/               thin Pi extension entrypoint
-src/                      TypeScript implementation modules and local Pi contract
-test/                     package-shape, unit, and fake integration tests
-docs/                     implementation guide, runbooks, and safety docs
-skills/imagegen/SKILL.md  image generation skill helper
+codex_generate_image
 ```
 
-## Start the autonomous build
+The tool generates bitmap images through the user's existing Pi `openai-codex` ChatGPT/Codex authentication. It does **not** require `OPENAI_API_KEY`, does not use OpenAI Platform API-key billing by default, and is not a public proxy for a personal ChatGPT/Codex subscription.
 
-From a fresh checkout or unzipped copy:
+> Status: the implementation is covered by non-live unit and fake-integration tests. Real Pi/Codex image generation is intentionally validated in the dedicated live-validation ticket/checklist; do not treat backend assumptions as release-verified until that checklist passes or a blocker is recorded.
 
-```bash
-cd pi-codex-image-gen-autonomous-system
-bash scripts/prepare-autonomous-repo.sh
-bash scripts/build-loop.sh --create-branch feature/autonomous-build --max-cycles 40
-```
+## Quick start
 
-To keep commits local:
+Prerequisites:
 
-```bash
-bash scripts/build-loop.sh --create-branch feature/autonomous-build --max-cycles 40 --no-push
-```
+* Node.js 20 or newer;
+* npm;
+* Pi installed and authenticated with `/login` for the ChatGPT/Codex (`openai-codex`) provider when running live generation.
 
-The build loop will repeatedly invoke:
+From this repository:
 
 ```bash
-scripts/run-agent.sh "$PROMPT"
-```
-
-The default wrapper uses Pi:
-
-```bash
-pi --no-session -p @AGENTS.md @PROJECT_BRIEF.md @BUILD_TICKETS.md @BUILD_NOTES.md "$PROMPT"
-```
-
-Build-loop logs and lock files are kept outside the repository by default under `${XDG_STATE_HOME:-~/.local/state}/pi-codex-image-gen/build-loop/` so private runtime files do not interfere with repository guardrails. Set `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR=/path/to/state` to override this location.
-
-## Local checks
-
-The non-live quality gate does not require Pi or Codex credentials:
-
-```bash
+npm ci
 bash scripts/quality-gate.sh
+pi -e .
 ```
 
-The live validation ticket intentionally uses real Pi/Codex auth when available. It may consume Codex/ChatGPT usage and must not commit generated images or logs.
+Inside Pi, optional help is available when the Pi command API supports extension commands:
 
-## Tool contract and configuration
+```text
+/codex-image-gen
+```
 
-`codex_generate_image` accepts this stable public parameter set:
+Then ask explicitly for image generation, for example:
+
+```text
+Use codex_generate_image to create a 64x64 flat vector test icon: a blue circle inside a grey square, no text, png, save none.
+```
+
+Live generation may consume Codex/ChatGPT usage and remains subject to account, workspace, rate, entitlement, billing, and safety limits.
+
+## Install and load commands
+
+Temporary one-session load from a checkout:
+
+```bash
+cd /path/to/pi-codex-image-gen
+pi -e .
+```
+
+Project-local install from another project:
+
+```bash
+cd /path/to/your/project
+pi install -l /absolute/path/to/pi-codex-image-gen
+pi
+```
+
+Git install once a trusted remote and ref are available:
+
+```bash
+pi install -l git:github.com/<owner>/pi-codex-image-gen@<tag-or-commit>
+```
+
+npm-style install after ownership/name is confirmed:
+
+```bash
+pi install npm:pi-codex-image-gen@<version>
+# or, if released under a scope:
+pi install npm:@<scope>/pi-codex-image-gen@<version>
+```
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full installation, update, and removal notes.
+
+## Tool contract
+
+`codex_generate_image` accepts a strict object with these public parameters:
 
 | Parameter | Required | Values | Default |
 | --- | --- | --- | --- |
-| `prompt` | yes | non-empty string, max 8000 chars after trimming | none |
-| `model` | no | Codex routing model id | config default (`gpt-5.5` unless overridden) |
+| `prompt` | yes | non-empty string, max 8000 characters after trimming | none |
+| `model` | no | Codex routing model id, max 128 characters | config default, currently `gpt-5.5` |
 | `outputFormat` | no | `png`, `jpeg`, `webp` | `png` |
-| `save` | no | `none`, `project`, `global`, `custom` | config default (`global` unless overridden) |
-| `saveDir` | only for custom saves without configured dir | directory string | config/env save dir |
+| `save` | no | `none`, `project`, `global`, `custom` | config default, currently `global` |
+| `saveDir` | conditional | directory path string | required for `custom` saves unless configured |
 
-Config files are JSON objects with optional `model`, `saveMode`, and `saveDir` keys. Precedence is defaults, global config, project config, then environment overrides:
+Unknown properties and invalid values are rejected with sanitized validation errors.
 
-* global: `~/.pi/agent/extensions/codex-image-gen.json`
-* project: `<cwd>/.pi/extensions/codex-image-gen.json`
-* env: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, `PI_CODEX_IMAGE_SAVE_DIR`
+Example tool-call shape:
 
-The config loader validates bad values with structured, sanitized errors and does not read credential files.
+```json
+{
+  "prompt": "A small flat vector test icon: blue circle inside a grey square, no text",
+  "outputFormat": "png",
+  "save": "global"
+}
+```
 
-When loaded by Pi, the extension registers `codex_generate_image` and an optional `/codex-image-gen` help command. Tool execution now wires input validation, config loading, Pi `openai-codex` auth retrieval, Codex client streaming, save-mode handling, and Pi text/image result formatting. Live backend validation is still reserved for Ticket 007.
+## Configuration
 
-Save modes resolve to documented local directories: `global` writes under the Pi agent dir, `project` writes under `<cwd>/.pi/generated-images/`, `custom` writes under the configured directory, and `none` skips disk writes. The formatter returns a concise text summary plus inline image content with the correct MIME type.
+Configuration is optional JSON. It controls defaults only; it must never contain credentials.
 
-## Important publishing caveat
+```json
+{
+  "model": "gpt-5.5",
+  "saveMode": "global",
+  "saveDir": ".pi/generated-images-custom"
+}
+```
 
-The requested unscoped package name is `pi-codex-image-gen`. That name appears to already exist publicly. The autonomous build should keep the local package name as requested, but release docs must mention that npm publishing may require package ownership, a scoped package name, or a private registry.
+Precedence, lowest to highest:
 
-## Security summary
+1. built-in defaults: `model="gpt-5.5"`, `saveMode="global"`;
+2. global config: `~/.pi/agent/extensions/codex-image-gen.json` or Pi's active agent-dir equivalent;
+3. project config: `<cwd>/.pi/extensions/codex-image-gen.json`;
+4. environment overrides:
+   * `PI_CODEX_IMAGE_MODEL`
+   * `PI_CODEX_IMAGE_SAVE_MODE`
+   * `PI_CODEX_IMAGE_SAVE_DIR`
 
-The final package must not read `~/.codex/auth.json`, must not ask the user to paste tokens, must not use `OPENAI_API_KEY` by default, and must not expose a personal ChatGPT/Codex subscription as a public proxy.
+Save locations:
 
-See `docs/SECURITY.md` and `docs/IMPLEMENTATION_GUIDE.md` before implementation.
+| Save mode | Location |
+| --- | --- |
+| `none` | no file write; inline image is still returned |
+| `project` | `<cwd>/.pi/generated-images/<session-id>/` |
+| `global` | `<agent-dir>/generated-images/<session-id>/` |
+| `custom` | `<saveDir>/<session-id>/`, with relative paths resolved under `<cwd>` |
+
+Session ids and image-generation ids are sanitized before they become path parts. Generated images are ignored and blocked from committed package contents by repository guards.
+
+## Result shape
+
+Successful tool results contain:
+
+* a concise text summary;
+* one inline image content item with base64 data and `image/png`, `image/jpeg`, or `image/webp`;
+* `details` metadata with provider, routing model, backend image model, output format, save mode, optional saved path, response id, image-generation id, revised prompt, and usage.
+
+## Repository map
+
+```text
+extensions/codex-image-gen.ts          Thin Pi extension entrypoint
+skills/imagegen/SKILL.md               Skill guidance for explicit image requests
+src/tool/codexImageGenApi.ts           Public schema, defaults, validation
+src/config/codexImageGenConfig.ts      Global/project/env config loading
+src/auth/codexAuth.ts                  In-memory openai-codex auth normalization
+src/codex/buildRequest.ts              Codex Responses request builder
+src/codex/CodexImageClient.ts          Fetch, retries, cancellation, stream orchestration
+src/codex/parseSse.ts                  Incremental SSE parser
+src/save/imageSave.ts                  Save-mode path resolution and file writes
+src/output/formatToolResult.ts         Pi text/image result formatting
+src/pi/piExtensionContract.ts          Local Pi API subset for tests
+src/pi/registerCodexImageGenTool.ts    Tool registration and execution wiring
+test/                                  Unit, fake integration, package-shape tests
+scripts/quality-gate.sh                Full non-live validation
+scripts/smoke-real-codex-image.mjs     Opt-in live-smoke hook guarded from default checks
+docs/                                  Installation, usage, architecture, security, validation, release
+```
+
+## Safety notes
+
+* Credentials are retrieved only from Pi's runtime model registry for the `openai-codex` provider.
+* The package does not read Codex credential files and does not ask users to paste tokens.
+* The default path does not use `OPENAI_API_KEY` and must not silently fall back to OpenAI API-key billing.
+* Backend responses and errors are sanitized; bearer tokens are never logged or returned.
+* The package is for local, single-user use only. Do not expose it as a shared service or subscription proxy.
+* Generated images can contain private prompt-derived content. Keep them out of git unless a future ticket explicitly approves a safe fixture.
+
+## More documentation
+
+* [Installation](docs/INSTALLATION.md)
+* [Usage](docs/USAGE.md)
+* [Architecture](docs/ARCHITECTURE.md)
+* [Security](docs/SECURITY.md)
+* [Troubleshooting](docs/TROUBLESHOOTING.md)
+* [Manual validation](docs/MANUAL_VALIDATION.md)
+* [Release](docs/RELEASE.md)
+* [Extension spec](docs/EXTENSION_SPEC.md)

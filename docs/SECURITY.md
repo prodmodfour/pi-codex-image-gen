@@ -1,60 +1,151 @@
 # Security
 
-`pi-codex-image-gen` is intended for local, single-user Pi sessions. It should never become a public proxy for a user's ChatGPT/Codex subscription.
+`pi-codex-image-gen` is designed for local, single-user Pi sessions. It must never become a public proxy for a user's ChatGPT/Codex subscription, a credential extraction tool, or a bypass for Codex/ChatGPT limits.
+
+## Threat model
+
+Protected assets:
+
+* Pi/Codex/ChatGPT credentials and refresh material;
+* account and workspace metadata;
+* private prompts and session history;
+* generated images that may encode private prompt content;
+* local filesystem paths and project data;
+* the user's Codex/ChatGPT usage quota and subscription entitlements.
+
+Primary risks:
+
+* accidental logging or committing of tokens;
+* reading credential files outside Pi's runtime auth API;
+* exposing a personal subscription through a shared service;
+* saving sensitive generated images into version control;
+* dumping raw backend errors that contain prompt or account context;
+* silently switching from ChatGPT/Codex subscription auth to API-key billing.
 
 ## Credential handling
 
-The extension must obtain credentials only from Pi's runtime model/provider API, specifically the `openai-codex` provider or the current equivalent.
+The extension obtains credentials only from Pi's runtime model/provider API for the `openai-codex` provider. The current implementation calls:
 
-The config loader reads only the documented non-secret config files (`~/.pi/agent/extensions/codex-image-gen.json` and `<cwd>/.pi/extensions/codex-image-gen.json`) plus documented environment overrides for model/save defaults. These files must not contain tokens or private auth material.
+```ts
+ctx.modelRegistry.getApiKeyForProvider("openai-codex")
+```
 
-It must not:
+at tool-call time, then keeps the returned token in memory only for the duration of the request.
 
-* read `~/.codex/auth.json`;
+The package must not:
+
+* read Codex credential files directly;
 * read OS credential stores directly;
-* ask the user to paste access tokens;
+* ask users to paste access tokens;
 * log bearer tokens;
 * write tokens to disk;
-* commit auth material;
-* fall back to `OPENAI_API_KEY` for the default path.
+* include token contents in errors, test fixtures, docs, or commits;
+* use `OPENAI_API_KEY` as a default fallback path.
 
-The auth module may decode the Pi-supplied bearer token in memory to extract non-secret routing metadata such as the ChatGPT account id. It does not verify token signatures and must not persist, print, or include token material in errors.
+The auth module may decode a Pi-supplied JWT payload in memory to extract non-secret routing metadata such as the ChatGPT account id. It does not verify token signatures and does not persist, print, or return token material.
+
+## Config files are not credential files
+
+The config loader reads only documented non-secret settings:
+
+* `<agent-dir>/extensions/codex-image-gen.json`, normally `~/.pi/agent/extensions/codex-image-gen.json`;
+* `<cwd>/.pi/extensions/codex-image-gen.json`;
+* environment overrides `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, and `PI_CODEX_IMAGE_SAVE_DIR`.
+
+Supported config keys are `model`, `saveMode`, and `saveDir`. Do not place tokens, account secrets, private prompts, or API keys in these files.
+
+Project `.pi/` files are ignored and blocked by repository guardrails by default because they can contain local runtime state.
 
 ## Billing and usage boundaries
 
-When authenticated through Codex/ChatGPT, image generation may consume the user's included Codex/ChatGPT usage. The extension cannot and must not bypass usage, rate, workspace, entitlement, or safety limits.
+When authenticated through `openai-codex`, image generation uses the user's ChatGPT/Codex access and may consume included or metered Codex/ChatGPT usage depending on the account and workspace.
 
-API-key image generation is a separate billing path and is a non-goal for this package.
+The extension cannot and must not bypass:
+
+* account login requirements;
+* workspace selection;
+* model or image-generation entitlements;
+* rate limits;
+* quota or usage limits;
+* billing boundaries;
+* content-safety systems.
+
+OpenAI Platform API-key image generation is a separate billing path and is not the default path for this package.
+
+## Public proxy non-goal
+
+Do not run this package as a web service, shared daemon, team API, CI image generator, or remote proxy for multiple users. The runtime assumes one local user controlling one Pi session with their own authenticated provider state.
+
+A safe deployment is:
+
+```text
+local user -> local Pi session -> local package -> user's openai-codex auth -> Codex backend
+```
+
+Unsafe deployments include:
+
+* exposing the tool over HTTP for other users;
+* sharing one user's ChatGPT/Codex login across a team;
+* forwarding arbitrary prompts from untrusted users;
+* adding browser scraping or credential automation to expand access;
+* adding generic command execution to the package.
 
 ## Generated image handling
 
-Generated images may contain sensitive content if the user's prompt is sensitive. The package should save images only in documented locations and should keep generated images out of git by default.
+Generated images can contain sensitive content if the prompt is sensitive. The package returns inline base64 image data so Pi can display the result even when no file is saved.
 
-Default save modes:
+Save modes:
 
-* `global`: `~/.pi/agent/generated-images/<session-id>/` or Pi's current agent-dir equivalent
-* `project`: `<cwd>/.pi/generated-images/<session-id>/`
-* `custom`: `<configured-dir>/<session-id>/`
-* `none`: no disk write
+| Mode | Location |
+| --- | --- |
+| `none` | no file write |
+| `project` | `<cwd>/.pi/generated-images/<session-id>/` |
+| `global` | `<agent-dir>/generated-images/<session-id>/` |
+| `custom` | `<configured-dir>/<session-id>/`, with relative paths resolved under `<cwd>` |
 
-The save module sanitizes session ids and image-generation ids before using them as path parts. It writes to a temporary file in the target directory and then renames the file into place to avoid leaving partially written final images when a write fails.
+The save module sanitizes session ids and image-generation ids before using them as path parts. It writes a temporary file in the target directory with user-only permissions and renames it into place.
 
-The formatted tool result includes inline base64 image data so Pi can display the image even when `save=none`. The saved path, when present, is intentionally returned to the local user; other private paths, credentials, and backend payloads must not be included.
+Repository guards block committed generated images, `.pi/`, `.agent/`, `.codex/`, logs, package tarballs, credential files, and private-key material. Keep generated images out of git unless a future ticket explicitly asks for a safe, non-private fixture.
 
-The quality gate must reject committed generated images and private Pi config.
+## Backend error handling
 
-## Backend risks
+Codex backend event shapes and error payloads can change. The parser tolerates unknown events but fails safely when no image result appears.
 
-Codex backend event shapes can change. The parser must tolerate unknown events but fail safely if no image result is returned.
-
-Backend error bodies may contain private prompt or account context. Keep user-facing errors concise and sanitized. The HTTP client should report status, retryability, request ids, and high-level backend error codes without dumping full response bodies or request payloads.
+The HTTP client reports high-level status, retryability, request ids, and sanitized backend error summaries. It must not dump full request bodies, prompts, bearer tokens, auth payloads, or raw backend response bodies into user-visible errors or committed logs.
 
 ## Local execution risks
 
-Pi packages run with local user permissions. The package must not add generic shell execution, destructive automation, browser scraping, or unrelated tools.
+Pi packages and extensions run with the local user's permissions. This package therefore avoids adding:
 
-The autonomous build agent may use `sudo` and run live tests because the owner permitted it, but those permissions are for build-time only and must not become runtime package behaviour.
+* generic shell execution;
+* destructive automation;
+* browser scraping;
+* telemetry or analytics;
+* unrelated tools;
+* public server endpoints.
 
-## Reporting issues
+The autonomous build system has permission to run live tests and install tooling during development, but those build-time permissions are not runtime package behavior.
 
-Report security issues privately to the repository owner. Do not open public issues containing credentials, token snippets, private prompts, or raw logs.
+## Operational checks
+
+Before committing or releasing, run:
+
+```bash
+bash scripts/quality-gate.sh
+```
+
+The gate includes:
+
+* shell syntax checks;
+* secret guard;
+* generated/private-file guard;
+* TypeScript typecheck;
+* unit and fake integration tests;
+* package dry-run contents validation;
+* a second generated/private-file guard after npm operations.
+
+Live validation must record only sanitized summaries in `BUILD_NOTES.md` and [MANUAL_VALIDATION.md](MANUAL_VALIDATION.md). Do not commit raw terminal logs, generated images, credentials, or private prompts.
+
+## Reporting security issues
+
+Report credential-handling, proxying, or generated-private-file issues privately to the repository owner. Public issues must not include tokens, credential snippets, private prompts, raw logs, generated private images, or account-specific diagnostics.

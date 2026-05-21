@@ -1,10 +1,26 @@
 # Extension spec assumptions
 
-This document records assumptions that the autonomous agent must verify and keep current.
+This document freezes the current Pi/Codex assumptions used by `pi-codex-image-gen`. If live validation or upstream source changes disprove any assumption, update implementation, tests, and docs together.
+
+## Scope
+
+The package registers exactly one primary image-generation tool:
+
+```text
+codex_generate_image
+```
+
+It may also register an optional help command:
+
+```text
+/codex-image-gen
+```
+
+The command is not part of the primary tool contract and can be absent on Pi runtimes without command registration support.
 
 ## Pi package manifest
 
-The package should declare resources in `package.json`:
+`package.json` declares package resources under `pi`:
 
 ```json
 {
@@ -16,57 +32,81 @@ The package should declare resources in `package.json`:
 }
 ```
 
-## Pi extension entrypoint
+Paths are relative to the package root. The package ships TypeScript source directly.
 
-The extension entrypoint should default-export a function that receives Pi's extension API and registers the tool.
+## Extension entrypoint
+
+`extensions/codex-image-gen.ts` remains thin:
 
 ```ts
-export default function codexImageGenExtension(pi: ExtensionAPI): void {
+import { registerCodexImageGenTool } from "../src/pi/registerCodexImageGenTool.ts";
+import type { PiExtensionApi } from "../src/pi/piExtensionContract.ts";
+
+export default function codexImageGenExtension(pi: PiExtensionApi): void {
   registerCodexImageGenTool(pi);
 }
 ```
 
+All testable behavior belongs in `src/` modules.
+
 ## Tool metadata
 
-Primary tool:
+Current metadata:
 
-```text
-name: codex_generate_image
-label: Codex Image
-description: Generate an image through Codex using existing openai-codex auth.
-```
+| Field | Value |
+| --- | --- |
+| name | `codex_generate_image` |
+| label | `Codex Image` |
+| description | `Generate an image with Codex through Pi's openai-codex authentication...` |
+| execution mode | `sequential` |
 
-The prompt guidelines must say to use it only for explicit image-generation requests.
+Prompt guidance must name the tool directly and say to use it only for explicit image-generation requests because it consumes Codex image usage.
 
-Optional command:
+## Public parameter schema
 
-```text
-/codex-image-gen
-```
-
-The help command is registered when `pi.registerCommand` is available and displays the public parameters, save modes, and safety notes. If a future Pi runtime removes command support, the tool still registers without the command.
-
-Public parameters:
+The public input object has `additionalProperties: false`.
 
 | Parameter | Required | Values/defaults |
 | --- | --- | --- |
-| `prompt` | yes | non-empty string, max 8000 chars after trimming |
-| `model` | no | configured Codex routing model, default `gpt-5.5` unless overridden |
+| `prompt` | yes | non-empty string, max 8000 characters after trimming |
+| `model` | no | Codex routing model id, max 128 characters; default `gpt-5.5` unless configured |
 | `outputFormat` | no | `png`, `jpeg`, `webp`; default `png` |
 | `save` | no | `none`, `project`, `global`, `custom`; default `global` unless configured |
-| `saveDir` | conditional | required for custom save mode unless configured |
+| `saveDir` | conditional | required for custom save mode unless config/env provides it |
+
+Do not add public parameters such as size, quality, seed, edit input, or masks until backend support is verified, fake tests are added, and user docs are updated.
 
 ## Config surface
 
-Config files are optional JSON objects with `model`, `saveMode`, and `saveDir` keys. Merge precedence is built-in defaults, global config, project config, then environment overrides.
+Optional config files are JSON objects with these keys:
 
-* global config: `~/.pi/agent/extensions/codex-image-gen.json`
-* project config: `<cwd>/.pi/extensions/codex-image-gen.json`
-* environment: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, `PI_CODEX_IMAGE_SAVE_DIR`
+* `model`;
+* `saveMode`;
+* `saveDir`.
 
-Config loading must not read credential files.
+Merge precedence:
 
-## Auth provider
+1. built-in defaults;
+2. global config;
+3. project config;
+4. environment overrides.
+
+Paths:
+
+| Scope | Path |
+| --- | --- |
+| global | `<agent-dir>/extensions/codex-image-gen.json`, normally `~/.pi/agent/extensions/codex-image-gen.json` |
+| project | `<cwd>/.pi/extensions/codex-image-gen.json` |
+
+Environment overrides:
+
+* `PI_CODEX_IMAGE_MODEL`;
+* `PI_CODEX_IMAGE_SAVE_MODE`;
+* `PI_CODEX_IMAGE_SAVE_DIR`.
+
+Config loading must never read credential files.
+
+## Pi auth provider assumption
 
 Provider name:
 
@@ -74,34 +114,224 @@ Provider name:
 openai-codex
 ```
 
-The implementation uses Pi's current model registry/context method, `ctx.modelRegistry.getApiKeyForProvider("openai-codex")`, to retrieve this provider's in-memory token at tool-call time. The local contract in `src/pi/piExtensionContract.ts` is only a test seam and should be updated if Pi's real API differs.
+Current runtime lookup:
 
-## Image-generation backend
+```ts
+ctx.modelRegistry.getApiKeyForProvider("openai-codex")
+```
 
-Ticket 002 verified the non-live request assumptions against current OpenAI image-generation docs and current `openai/codex` source:
+The local `src/pi/piExtensionContract.ts` type is a test seam. If Pi's real API changes, update the seam, registration code, and fake Pi tests.
 
-* ChatGPT-authenticated Codex Responses traffic uses `https://chatgpt.com/backend-api/codex` as the default base URL and appends `/responses`.
-* Requests use `POST`, `Accept: text/event-stream`, `Content-Type: application/json`, `Authorization: Bearer <Pi-supplied token>`, and `ChatGPT-Account-Id` when account metadata is available.
-* Session/thread headers may be sent as `session_id`, `session-id`, `thread_id`, `thread-id`, and `x-client-request-id`.
-* The body uses a mainline routing model such as `gpt-5.5`, `store: false`, `stream: true`, one user message, one `image_generation` tool declaration, `parallel_tool_calls: false`, and low text verbosity.
-* The image-generation tool requests `model: "gpt-image-2"`, `action: "generate"`, and the normalized `output_format`.
-* The streaming parser expects a final event shaped like `response.output_item.done` with `item.type = "image_generation_call"` and base64 image data in `item.result`. It also tolerates unknown events and extracts response id, text deltas, usage, and backend error events.
+`resolveCodexAuth()` accepts the Pi-supplied in-memory token or auth object. It extracts:
 
-## Save and result formatting
+* bearer token;
+* ChatGPT account id from explicit fields or decoded JWT claims;
+* non-secret claims summary when present.
 
-The Pi execution wiring passes `ctx.cwd`, `ctx.sessionManager.getSessionId()`, and Pi's agent dir when available (falling back to `PI_CODING_AGENT_DIR` or `~/.pi/agent`) into the save/config layers.
+It does not verify JWT signatures, persist tokens, or read credential files.
 
-The current save contract is:
+## Codex request assumption
 
-* `none`: no file write;
-* `project`: `<cwd>/.pi/generated-images/<session-id>/`;
-* `global`: `<agent-dir>/generated-images/<session-id>/`;
-* `custom`: `<configured-dir>/<session-id>/`, with relative directories resolved under `cwd`.
+The current non-live verified request target is:
 
-The implementation sanitizes session ids and image ids before using them as path parts, names files with the requested format extension, and writes through a temporary file plus rename.
+```text
+POST https://chatgpt.com/backend-api/codex/responses
+Accept: text/event-stream
+```
 
-The Pi result formatter returns text plus inline image content. The image content uses `mimeType` values `image/png`, `image/jpeg`, or `image/webp`. Details include provider, routing model, backend image model, output format, save mode, saved path when present, response id, image-generation id, revised prompt, and usage.
+Headers:
 
-Ticket 007 must still validate backend assumptions against a real authenticated Pi/Codex session. If live validation shows a different current event shape or endpoint contract, update `src/codex/*`, tests, and this document.
+| Header | Purpose |
+| --- | --- |
+| `authorization` | bearer token from Pi `openai-codex` auth |
+| `ChatGPT-Account-Id` | account id extracted from Pi auth metadata |
+| `content-type` | `application/json` |
+| `accept` | `text/event-stream` |
+| `user-agent` | package/version identifier |
+| `x-client-request-id` | optional sanitized tool-call/thread id |
+| `session_id`, `session-id` | optional sanitized Pi session id |
+| `thread_id`, `thread-id` | optional sanitized Pi tool-call/thread id |
 
-If current Codex provides a safer public SDK/CLI method for image generation, prefer that over hardcoding private endpoint details, as long as it still uses ChatGPT/Codex auth rather than API-key billing.
+Request body assumptions:
+
+```json
+{
+  "model": "gpt-5.5",
+  "instructions": "<short instruction to call image generation once>",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "<prompt>"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "image_generation",
+      "model": "gpt-image-2",
+      "output_format": "png",
+      "action": "generate"
+    }
+  ],
+  "tool_choice": "auto",
+  "parallel_tool_calls": false,
+  "reasoning": null,
+  "store": false,
+  "stream": true,
+  "include": [],
+  "text": {
+    "verbosity": "low"
+  }
+}
+```
+
+The implementation also sends client metadata identifying provider, package, tool, and backend image model.
+
+The prompt is request data only. It must not be interpolated into shell commands, browser automation, or external URLs.
+
+## SSE response assumption
+
+The backend streams text/event-stream data. Parser requirements:
+
+* handle split chunks;
+* handle multiple events per chunk;
+* normalize CRLF/CR line endings;
+* ignore comments and `[DONE]`;
+* parse JSON `data:` payloads;
+* tolerate unknown event types;
+* capture response id and usage when present;
+* accumulate text deltas;
+* capture backend errors;
+* extract final base64 image data.
+
+Expected final event shape:
+
+```json
+{
+  "type": "response.output_item.done",
+  "item": {
+    "type": "image_generation_call",
+    "id": "<image generation id>",
+    "status": "completed",
+    "result": "<base64 image>",
+    "revised_prompt": "<optional revised prompt>"
+  }
+}
+```
+
+The parser also checks `response.output` arrays for image-generation call items.
+
+Failure conditions:
+
+* malformed JSON -> `CODEX_IMAGE_GEN_MALFORMED_SSE`;
+* backend error event -> `CODEX_IMAGE_GEN_BACKEND_REFUSAL`;
+* stream completes with no image result -> `CODEX_IMAGE_GEN_MISSING_IMAGE_DATA`.
+
+## Retry and cancellation assumption
+
+Default retry policy:
+
+* maximum attempts: 3;
+* base delay: 200 ms;
+* max delay: 2000 ms;
+* jitter ratio: 0.2.
+
+Retryable:
+
+* HTTP 429;
+* HTTP 5xx;
+* transient network/transport failures.
+
+Non-retryable:
+
+* HTTP 401/403;
+* backend refusal events;
+* malformed SSE;
+* missing image data after a successful stream.
+
+Abort signals must map to `CODEX_IMAGE_GEN_CANCELLED` without returning partial image data.
+
+## Save contract
+
+Save modes:
+
+| Mode | Contract |
+| --- | --- |
+| `none` | no file write |
+| `project` | `<cwd>/.pi/generated-images/<session-id>/<image-id>.<format>` |
+| `global` | `<agent-dir>/generated-images/<session-id>/<image-id>.<format>` |
+| `custom` | `<saveDir>/<session-id>/<image-id>.<format>`; relative `saveDir` resolves under `cwd` |
+
+`session-id` and `image-id` are sanitized path parts. The extension uses Pi's session id when available; otherwise it falls back to a safe default. The image id comes from the backend image-generation id when available, otherwise the tool-call id.
+
+Written files use the requested format extension (`png`, `jpeg`, `webp`). The save module writes a temporary file with mode `0600` and renames it into place.
+
+## Result contract
+
+The formatted Pi result includes:
+
+```ts
+{
+  content: [
+    { type: "text", text: "Generated image via ..." },
+    { type: "image", data: base64Image, mimeType: "image/png" | "image/jpeg" | "image/webp" }
+  ],
+  details: {
+    provider: "openai-codex",
+    routingModel: string,
+    backendImageModel: "gpt-image-2",
+    outputFormat: "png" | "jpeg" | "webp",
+    saveMode: "none" | "project" | "global" | "custom",
+    savedPath?: string,
+    responseId?: string,
+    imageGenerationId?: string,
+    revisedPrompt?: string,
+    usage?: Record<string, unknown>
+  }
+}
+```
+
+`details.savedPath` is intentionally returned to the local user only when an image was written.
+
+## Skill contract
+
+`skills/imagegen/SKILL.md` uses Agent Skills frontmatter:
+
+```yaml
+name: imagegen
+description: Use when the user explicitly asks Pi to create a bitmap image, icon, illustration, visual asset, or placeholder artwork through codex_generate_image.
+```
+
+The skill must:
+
+* trigger only for explicit image-generation requests;
+* remind the model not to use the tool for text-only tasks;
+* prefer safe save modes based on user intent;
+* mention Codex/ChatGPT usage and limit boundaries.
+
+## Updating assumptions
+
+When Pi or Codex changes behavior:
+
+1. Reproduce with a harmless prompt and sanitized notes.
+2. Do not commit raw backend streams if they contain private prompt or account context.
+3. Create minimal fake fixtures that preserve only the structural event/request shape needed for tests.
+4. Update implementation modules:
+   * auth changes -> `src/auth/codexAuth.ts` and Pi tests;
+   * request changes -> `src/codex/buildRequest.ts` and request tests;
+   * stream changes -> `src/codex/parseSse.ts` and parser/client tests;
+   * save/result changes -> `src/save/*`, `src/output/*`, and docs.
+5. Update this spec, [ARCHITECTURE.md](ARCHITECTURE.md), [USAGE.md](USAGE.md), and [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+6. Run `bash scripts/quality-gate.sh`.
+7. Record sanitized validation results in `BUILD_NOTES.md` and [MANUAL_VALIDATION.md](MANUAL_VALIDATION.md).
+
+If Codex provides a safer public SDK or CLI image-generation method that uses the same ChatGPT/Codex auth path without API-key billing, prefer that over hardcoded private endpoint details after adding tests and updating docs.
+
+## Live-validation status
+
+Ticket 007 must validate the frozen backend assumptions against a real authenticated Pi/Codex session. Until then, the backend request and stream contract is fake-tested and source/doc-verified, but not live-release-verified.

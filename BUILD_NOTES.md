@@ -138,13 +138,37 @@ Limitations/blockers:
 
 * No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
 
+## Ticket 006 notes
+
+Completed documentation/runbook work:
+
+* Rewrote `README.md` from autonomous scaffold notes into package-facing documentation with quick start, install/load commands, auth explanation, tool contract, config, save modes, result shape, repo map, caveats, and safety notes.
+* Completed `docs/INSTALLATION.md` with prerequisites, non-live verification, one-session `pi -e .` loading, project/global local installs, git and npm-style installs, auth setup, config examples, and load-success checks.
+* Completed `docs/USAGE.md` with explicit image-generation guidance, prompt examples, JSON-style tool-call examples, parameter validation details, config precedence, save modes, result shape, and operational boundaries.
+* Expanded `docs/ARCHITECTURE.md` with module responsibilities and the full registration/config/auth/request/retry/SSE/save/result pipeline.
+* Expanded `docs/SECURITY.md` with threat model, credential-handling rules, config boundaries, usage limits, generated-image handling, public-proxy non-goal, backend-error hygiene, and operational checks.
+* Completed `docs/TROUBLESHOOTING.md` with load issues, missing auth, malformed auth/account metadata, 401/403, 429, 5xx/network errors, backend refusal, no-image responses, malformed SSE, custom save errors, save path issues, config errors, and npm name conflict guidance.
+* Completed `docs/MANUAL_VALIDATION.md` with the exact live-validation checklist for tools, non-live gate, safe auth, package load, `save=global`, `save=none`, optional format checks, smoke hook handling, cleanup, and sanitized result recording.
+* Expanded `docs/RELEASE.md` with quality/dry-run checks, package content expectations, name-ownership caveats, versioning, npm/git release procedures, post-release validation, and rollback notes.
+* Expanded `docs/EXTENSION_SPEC.md` with frozen Pi manifest, tool schema, config, auth, Codex request/stream, retry, save, result, and skill assumptions plus the update process.
+* Updated the guarded smoke script messaging so it accurately points live validation to Ticket 007/manual validation without implementing a live smoke path in this docs ticket.
+
+Verification:
+
+* `bash scripts/quality-gate.sh` passed on 2026-05-21.
+
+Limitations/blockers:
+
+* No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
+* `scripts/smoke-real-codex-image.mjs` remains a guarded hook rather than a real consuming smoke test; Ticket 007 may implement or bypass it according to the live-validation checklist.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 005 — Strengthen tests, guards, and packaging checks.
+Ticket 006 — Complete docs and operational runbooks.
 
 ## Last quality gates
 
@@ -152,4 +176,4 @@ Ticket 005 — Strengthen tests, guards, and packaging checks.
 
 ## Next recommended ticket
 
-Ticket 006 — Complete docs and operational runbooks.
+Ticket 007 — Perform live Pi/Codex image-generation validation.
