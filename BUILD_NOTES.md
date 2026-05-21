@@ -186,18 +186,43 @@ Limitations/blockers:
 * No live blocker remains for Ticket 007.
 * Live validation covered `png` with `save=global` and `save=none`; optional live `jpeg`/`webp` spot checks were skipped to conserve usage and remain covered by fake/unit tests.
 
+## Ticket 008 notes
+
+Completed release-readiness and polish work:
+
+* Ran and inspected `npm pack --dry-run`; the dry-run package contained the expected package metadata, docs, extension, skill, source, tests, scripts, and lightweight CI workflow, and excluded generated/private/runtime artifacts. The final dry-run reported 55 files for `pi-codex-image-gen@0.0.0`.
+* Checked the public npm registry with `npm view pi-codex-image-gen name version description --json`; it returned an existing public `pi-codex-image-gen@0.1.9`, so docs now state that unscoped npm publishing/installing requires maintainer-owned provenance and recommend local, git, scoped, or private-registry alternatives.
+* Kept the package version at `0.0.0` because public publishing is still gated on maintainer release approval and package-name ownership/provenance.
+* Confirmed package licensing is MIT via `package.json` and `LICENSE.md`; documented that no separate `NOTICE` file is required unless future releases vendor assets or attribution-requiring code.
+* Updated package release metadata with repository, bugs, homepage, and a package-facing description.
+* Added a lightweight GitHub Actions workflow that runs only `bash scripts/quality-gate.sh` on Node.js 22 without live Pi/Codex credentials, `codex login`, or image-generation usage.
+* Added tests covering release metadata, license presence, package-name caveat docs, and the non-live CI workflow.
+* Updated README, installation, release, troubleshooting, and contributing docs for live-validation status, package-name caveats, version posture, license/notices, and CI behavior.
+
+Verification:
+
+* `npm pack --dry-run` was run and inspected before and after release-readiness changes.
+* `bash scripts/check-no-secrets.sh` passed on 2026-05-21.
+* `bash scripts/check-no-generated-private-files.sh` passed on 2026-05-21.
+* `bash scripts/quality-gate.sh` passed on 2026-05-21.
+
+Limitations/blockers:
+
+* No release was published and no package version was bumped; maintainer approval and package-name ownership/provenance are still required before public npm publishing.
+* The CI workflow is non-live only and intentionally does not validate real image generation.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 007 — Perform live Pi/Codex image-generation validation.
+Ticket 008 — Release readiness and repository polish.
 
 ## Last quality gates
 
-2026-05-21 — `bash scripts/quality-gate.sh` passed before and after live validation cleanup.
+2026-05-21 — `bash scripts/quality-gate.sh` passed after release-readiness polish.
 
 ## Next recommended ticket
 
-Ticket 008 — Release readiness and repository polish.
+Ticket 099 — Final autonomous review and completion marker.

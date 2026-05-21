@@ -31,6 +31,7 @@ const requiredPackFiles = [
   'scripts/check-shell-syntax.sh',
   'scripts/quality-gate.sh',
   'scripts/smoke-real-codex-image.mjs',
+  '.github/workflows/quality-gate.yml',
 ];
 
 function runNpmPackDryRun() {
@@ -83,6 +84,7 @@ async function collectRuntimeFiles(directory) {
 test('package manifest includes tests and operational scripts in the npm file set', () => {
   assert.ok(packageJson.files.includes('test'));
   assert.ok(packageJson.files.includes('scripts'));
+  assert.ok(packageJson.files.includes('.github/workflows'));
   assert.deepEqual(packageJson.pi.extensions, ['./extensions/codex-image-gen.ts']);
   assert.deepEqual(packageJson.pi.skills, ['./skills']);
 });

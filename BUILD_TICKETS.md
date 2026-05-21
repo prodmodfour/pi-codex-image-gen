@@ -205,7 +205,7 @@ Required:
 
 ## 008 — Release readiness and repository polish
 
-Status: TODO
+Status: DONE
 
 Prepare for review or publishing.
 

@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const imagegenSkill = await readFile(new URL('../skills/imagegen/SKILL.md', import.meta.url), 'utf8');
+const licenseText = await readFile(new URL('../LICENSE.md', import.meta.url), 'utf8');
+const releaseDocs = await readFile(new URL('../docs/RELEASE.md', import.meta.url), 'utf8');
+const ciWorkflow = await readFile(new URL('../.github/workflows/quality-gate.yml', import.meta.url), 'utf8');
 
 test('package has the requested Pi package identity', () => {
   assert.equal(packageJson.name, 'pi-codex-image-gen');
@@ -16,6 +19,26 @@ test('package has the requested Pi package identity', () => {
 test('package declares Pi extension and skill resources', () => {
   assert.deepEqual(packageJson.pi.extensions, ['./extensions/codex-image-gen.ts']);
   assert.deepEqual(packageJson.pi.skills, ['./skills']);
+});
+
+test('package release metadata and license are review-ready', () => {
+  assert.equal(packageJson.license, 'MIT');
+  assert.match(licenseText, /MIT License/);
+  assert.doesNotMatch(packageJson.description, /scaffold/i);
+  assert.match(packageJson.description, /Codex ChatGPT auth/);
+  assert.equal(packageJson.repository.type, 'git');
+  assert.match(packageJson.repository.url, /prodmodfour\/pi-codex-image-gen\.git$/);
+  assert.match(packageJson.homepage, /prodmodfour\/pi-codex-image-gen#readme$/);
+  assert.match(releaseDocs, /scoped npm package/);
+  assert.match(releaseDocs, /private registry package/);
+});
+
+test('ci workflow runs only the non-live quality gate', () => {
+  const apiKeyEnvName = 'OPENAI' + '_API_KEY';
+  assert.match(ciWorkflow, /bash scripts\/quality-gate\.sh/);
+  assert.match(ciWorkflow, /node-version: '22'/);
+  assert.equal(ciWorkflow.includes(apiKeyEnvName), false);
+  assert.doesNotMatch(ciWorkflow, /smoke:codex-image|codex login|auth\.json/);
 });
 
 test('imagegen skill has Pi-compatible frontmatter and guidance', () => {

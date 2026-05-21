@@ -2,7 +2,7 @@
 
 Release work happens only after implementation docs are current, non-live quality gates pass, and live validation has either passed or an honest live-only blocker is recorded.
 
-This package is not ready for public publishing until a maintainer confirms package-name ownership and live backend behavior.
+Live Pi/Codex backend validation passed on 2026-05-21 for harmless PNG prompts with `save=global` and `save=none`. Public npm publishing is still not ready until a maintainer confirms package-name ownership/provenance, chooses a release version, and approves the release source.
 
 ## Release prerequisites
 
@@ -12,6 +12,11 @@ This package is not ready for public publishing until a maintainer confirms pack
 * No generated images, raw logs, `.pi/`, `.agent/`, `.codex/`, credentials, or private config are in the working tree.
 * Public docs match the implementation and current backend assumptions.
 * The default path still does not depend on `OPENAI_API_KEY` or an OpenAI API SDK.
+* `package.json` release metadata, license declaration, and repository URLs are correct for the intended release source.
+
+## License and notices
+
+`package.json` declares `MIT`, and `LICENSE.md` contains the MIT license text with the project copyright notice. No generated assets, vendored third-party source, or bundled binary artifacts are intentionally shipped, so no separate `NOTICE` file is required at this time. If future releases vendor assets or code that require attribution, add the notice before publishing.
 
 ## Non-live release checks
 
@@ -33,7 +38,8 @@ The package dry-run must include:
 * all required docs;
 * all runtime `src/` modules;
 * unit/fake integration tests;
-* guard, quality, package-check, and smoke scripts.
+* guard, quality, package-check, and smoke scripts;
+* `.github/workflows/quality-gate.yml` for the lightweight non-live CI definition.
 
 The package dry-run must exclude:
 
@@ -47,6 +53,10 @@ The package dry-run must exclude:
 * private-key material;
 * real `.env` files.
 
+## Lightweight CI
+
+The repository includes a GitHub Actions workflow at `.github/workflows/quality-gate.yml`. It runs only the non-live `bash scripts/quality-gate.sh` check on Node.js 22 and does not require Pi/Codex credentials, live image generation, `codex login`, or any repository secrets. Do not add live image-generation validation to CI unless a future maintainer explicitly provisions safe, non-shared credentials and updates the security model.
+
 ## Package-name caveat
 
 The requested unscoped npm package name is:
@@ -55,7 +65,7 @@ The requested unscoped npm package name is:
 pi-codex-image-gen
 ```
 
-That name may already be publicly owned. Do not publish under an unscoped name unless the maintainer controls it and verifies the npm provenance.
+A registry check on 2026-05-21 returned an existing public `pi-codex-image-gen@0.1.9` package. Do not publish under the unscoped name unless the maintainer controls it and verifies npm provenance.
 
 Safe alternatives:
 
@@ -77,7 +87,7 @@ Document the chosen install source in README and installation docs before releas
 
 ## Versioning
 
-The repository currently uses `0.0.0` while the package is under autonomous construction. Before a real release:
+The repository currently keeps `0.0.0` for review because public publishing is gated on maintainer approval and package-name ownership/provenance. Before a real release:
 
 1. choose a semver version;
 2. update `package.json` and `package-lock.json` together;

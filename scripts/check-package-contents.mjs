@@ -122,6 +122,9 @@ const requiredByCategory = new Map([
     'scripts/smoke-real-codex-image.mjs',
     'scripts/lib/pretty-print.sh',
   ]],
+  ['ci', [
+    '.github/workflows/quality-gate.yml',
+  ]],
 ]);
 
 for (const [category, requiredPaths] of requiredByCategory) {

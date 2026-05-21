@@ -8,7 +8,7 @@ codex_generate_image
 
 The tool generates bitmap images through the user's existing Pi `openai-codex` ChatGPT/Codex authentication. It does **not** require `OPENAI_API_KEY`, does not use OpenAI Platform API-key billing by default, and is not a public proxy for a personal ChatGPT/Codex subscription.
 
-> Status: the implementation is covered by non-live unit and fake-integration tests. Real Pi/Codex image generation is intentionally validated in the dedicated live-validation ticket/checklist; do not treat backend assumptions as release-verified until that checklist passes or a blocker is recorded.
+> Status: non-live unit/fake-integration tests pass, and live Pi/Codex validation passed on 2026-05-21 for harmless PNG prompts with `save=global` and `save=none`. Public npm publishing remains gated on maintainer release approval and package-name ownership/provenance; the repository currently keeps version `0.0.0` for review.
 
 ## Quick start
 
@@ -63,11 +63,11 @@ Git install once a trusted remote and ref are available:
 pi install -l git:github.com/<owner>/pi-codex-image-gen@<tag-or-commit>
 ```
 
-npm-style install after ownership/name is confirmed:
+npm-style install only after ownership/name provenance is confirmed. The unscoped public name currently resolves on npm, so prefer a scoped/private release unless the maintainer controls that name:
 
 ```bash
 pi install npm:pi-codex-image-gen@<version>
-# or, if released under a scope:
+# safer if released under a maintainer-controlled scope:
 pi install npm:@<scope>/pi-codex-image-gen@<version>
 ```
 

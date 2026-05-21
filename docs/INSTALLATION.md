@@ -91,15 +91,15 @@ Pinning a tag or commit keeps the installed package auditable and avoids surpris
 
 ## npm-style install
 
-The requested unscoped package name is `pi-codex-image-gen`, but that public name may already be owned by another maintainer. Do not publish or install by unscoped name unless ownership and provenance are confirmed.
+The requested unscoped package name is `pi-codex-image-gen`. A registry check on 2026-05-21 returned an existing public `pi-codex-image-gen@0.1.9` package, so do not publish or install by unscoped name unless ownership and provenance are confirmed.
 
-If the unscoped name is legitimately published by this project:
+If the unscoped name is legitimately controlled and published by this project:
 
 ```bash
 pi install npm:pi-codex-image-gen@<version>
 ```
 
-If released under a scope or private registry:
+Safer alternatives are a maintainer-controlled scope or private registry:
 
 ```bash
 pi install npm:@<scope>/pi-codex-image-gen@<version>

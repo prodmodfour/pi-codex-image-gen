@@ -1,8 +1,16 @@
 {
   "name": "pi-codex-image-gen",
   "version": "0.0.0",
-  "description": "Autonomous-build scaffold for a Pi extension that generates images through Codex ChatGPT auth.",
+  "description": "Pi extension that generates images through Codex ChatGPT auth without OpenAI API-key billing.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prodmodfour/pi-codex-image-gen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prodmodfour/pi-codex-image-gen/issues"
+  },
+  "homepage": "https://github.com/prodmodfour/pi-codex-image-gen#readme",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -24,6 +32,7 @@
     "docs",
     "test",
     "scripts",
+    ".github/workflows",
     "README.md",
     "CONTRIBUTING.md",
     "LICENSE.md",

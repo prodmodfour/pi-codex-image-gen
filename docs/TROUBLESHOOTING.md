@@ -286,9 +286,10 @@ The supported key is `saveMode`, not `save`.
 
 ## Package-name publishing conflict
 
-The unscoped npm name `pi-codex-image-gen` may already be owned publicly. If npm install or publish fails because of name ownership:
+The unscoped npm name `pi-codex-image-gen` is known to resolve publicly (`npm view` returned `pi-codex-image-gen@0.1.9` on 2026-05-21). If npm install or publish fails because of name ownership or provenance concerns:
 
 * do not publish under a name you do not control;
 * use local path or git installs for validation;
 * choose a scoped package such as `@<scope>/pi-codex-image-gen` if releasing;
+* use a private registry package under an organization-owned scope when appropriate;
 * document the chosen install source in [RELEASE.md](RELEASE.md).
