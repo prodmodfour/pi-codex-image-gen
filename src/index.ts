@@ -96,3 +96,28 @@ export type {
   CodexImageClientRetryPolicy,
   CodexImageGenerationResult,
 } from "./codex/CodexImageClient.ts";
+export {
+  ImageSaveError,
+  resolveImageSaveTarget,
+  sanitizeImageSavePathPart,
+  saveGeneratedImage,
+} from "./save/imageSave.ts";
+export type {
+  ImageSaveErrorCode,
+  ImageSaveFilesystem,
+  ImageSaveResult,
+  ImageSaveSkippedResult,
+  ImageSaveTarget,
+  ImageSaveWrittenResult,
+  ImageSaveWrittenTarget,
+  ResolveImageSaveTargetOptions,
+  SaveGeneratedImageOptions,
+} from "./save/imageSave.ts";
+export {
+  formatCodexImageToolResult,
+  getMimeTypeForOutputFormat,
+} from "./output/formatToolResult.ts";
+export type {
+  CodexImageGenToolResultDetails,
+  FormatCodexImageToolResultOptions,
+} from "./output/formatToolResult.ts";

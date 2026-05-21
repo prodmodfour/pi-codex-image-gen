@@ -80,6 +80,8 @@ Config files are JSON objects with optional `model`, `saveMode`, and `saveDir` k
 
 The config loader validates bad values with structured, sanitized errors and does not read credential files.
 
+Save modes resolve to documented local directories: `global` writes under the Pi agent dir, `project` writes under `<cwd>/.pi/generated-images/`, `custom` writes under the configured directory, and `none` skips disk writes. The formatter returns a concise text summary plus inline image content with the correct MIME type.
+
 ## Important publishing caveat
 
 The requested unscoped package name is `pi-codex-image-gen`. That name appears to already exist publicly. The autonomous build should keep the local package name as requested, but release docs must mention that npm publishing may require package ownership, a scoped package name, or a private registry.

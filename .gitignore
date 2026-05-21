@@ -23,6 +23,7 @@ npm-debug.log*
 .pi/generated-images/
 .pi/**/generated-images/
 generated-images/
+**/generated-images/
 .tmp/
 tmp/
 *.generated.png

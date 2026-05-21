@@ -80,9 +80,25 @@ Limitations/blockers:
 * The Pi tool registration still returns the skeleton not-implemented response until Ticket 004 wires the client into the extension.
 * Image saving and Pi result formatting remain scoped to Ticket 003.
 
+## Ticket 003 notes
+
+Completed image save/result formatting work:
+
+* Implemented `src/save/imageSave.ts` with `none`, `project`, `global`, and `custom` save-mode resolution.
+* Implemented documented save paths: project saves under `<cwd>/.pi/generated-images/<session-id>/`, global saves under `<agent-dir>/generated-images/<session-id>/`, custom saves under the configured directory with relative paths resolved under `cwd`, and `none` skips disk writes.
+* Added path-part sanitization for session ids and image-generation ids, deterministic filename extension mapping, custom-save validation, and atomic-ish temporary-file-plus-rename writes.
+* Implemented `src/output/formatToolResult.ts` with concise text summaries, inline Pi image content using `image/png`, `image/jpeg`, or `image/webp`, and details metadata for provider, routing model, backend image model, output format, save mode, saved path, response id, image-generation id, revised prompt, and usage.
+* Added unit tests for save target resolution, sanitization, write/no-write behavior, MIME mapping, and result formatting.
+* Strengthened generated-image ignore/guard coverage for nested `generated-images` directories and updated README/docs for save locations, result shape, and security behavior.
+
+Limitations/blockers:
+
+* The Pi tool registration still returns the skeleton not-implemented response until Ticket 004 wires validation, auth, client, saving, and formatting into the extension.
+* No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
+
 ## Last completed ticket
 
-Ticket 002 — Implement Codex auth, request construction, SSE parsing, and retries.
+Ticket 003 — Implement image save modes and Pi tool result formatting.
 
 ## Last quality gates
 
@@ -90,4 +106,4 @@ Ticket 002 — Implement Codex auth, request construction, SSE parsing, and retr
 
 ## Next recommended ticket
 
-Ticket 003 — Implement image save modes and Pi tool result formatting.
+Ticket 004 — Wire the Pi extension, help surface, and imagegen skill.

@@ -28,6 +28,17 @@ Config JSON must be an object with optional `model`, `saveMode`, and `saveDir` k
 
 If `save=custom` (or a resolved config default of `saveMode=custom`) is used, provide `saveDir` either in the tool call, config file, or `PI_CODEX_IMAGE_SAVE_DIR`.
 
+## Save path issues
+
+Resolved save locations are:
+
+* `project`: `<cwd>/.pi/generated-images/<session-id>/`
+* `global`: `<agent-dir>/generated-images/<session-id>/`
+* `custom`: `<saveDir>/<session-id>/` (relative custom directories resolve under `<cwd>`)
+* `none`: no file is written, but inline image content is still returned
+
+If saving fails, check directory permissions, available disk space, and whether the custom path is valid for the local machine. Session ids and image ids are sanitized in filenames, so the final path may differ from the raw backend id.
+
 ## Backend communication errors
 
 The backend client uses sanitized structured errors:

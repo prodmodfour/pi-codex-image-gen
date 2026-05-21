@@ -80,7 +80,7 @@ Required:
 
 ## 003 — Implement image save modes and Pi tool result formatting
 
-Status: TODO
+Status: DONE
 
 Add storage and formatting behaviour.
 

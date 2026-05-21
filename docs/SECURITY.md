@@ -37,6 +37,10 @@ Default save modes:
 * `custom`: `<configured-dir>/<session-id>/`
 * `none`: no disk write
 
+The save module sanitizes session ids and image-generation ids before using them as path parts. It writes to a temporary file in the target directory and then renames the file into place to avoid leaving partially written final images when a write fails.
+
+The formatted tool result includes inline base64 image data so Pi can display the image even when `save=none`. The saved path, when present, is intentionally returned to the local user; other private paths, credentials, and backend payloads must not be included.
+
 The quality gate must reject committed generated images and private Pi config.
 
 ## Backend risks

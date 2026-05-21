@@ -79,6 +79,19 @@ Ticket 002 verified the non-live request assumptions against current OpenAI imag
 * The image-generation tool requests `model: "gpt-image-2"`, `action: "generate"`, and the normalized `output_format`.
 * The streaming parser expects a final event shaped like `response.output_item.done` with `item.type = "image_generation_call"` and base64 image data in `item.result`. It also tolerates unknown events and extracts response id, text deltas, usage, and backend error events.
 
-Ticket 007 must still validate these assumptions against a real authenticated Pi/Codex session. If live validation shows a different current event shape or endpoint contract, update `src/codex/*`, tests, and this document.
+## Save and result formatting
+
+The current save contract is:
+
+* `none`: no file write;
+* `project`: `<cwd>/.pi/generated-images/<session-id>/`;
+* `global`: `<agent-dir>/generated-images/<session-id>/`;
+* `custom`: `<configured-dir>/<session-id>/`, with relative directories resolved under `cwd`.
+
+The implementation sanitizes session ids and image ids before using them as path parts, names files with the requested format extension, and writes through a temporary file plus rename.
+
+The Pi result formatter returns text plus inline image content. The image content uses `mimeType` values `image/png`, `image/jpeg`, or `image/webp`. Details include provider, routing model, backend image model, output format, save mode, saved path when present, response id, image-generation id, revised prompt, and usage.
+
+Ticket 007 must still validate backend assumptions against a real authenticated Pi/Codex session. If live validation shows a different current event shape or endpoint contract, update `src/codex/*`, tests, and this document.
 
 If current Codex provides a safer public SDK/CLI method for image generation, prefer that over hardcoding private endpoint details, as long as it still uses ChatGPT/Codex auth rather than API-key billing.

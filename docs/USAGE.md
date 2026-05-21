@@ -2,7 +2,7 @@
 
 The package registers one primary tool: `codex_generate_image`.
 
-The public input contract, config validation, and fake-tested Codex request/streaming layer are implemented. Pi execution wiring, image saving, and final result formatting are completed in later build tickets, so the registered tool still returns the skeleton response until those tickets land.
+The public input contract, config validation, fake-tested Codex request/streaming layer, save-mode resolver, and Pi result formatter are implemented. Pi execution wiring is completed in a later build ticket, so the registered tool still returns the skeleton response until that wiring lands.
 
 ## Tool parameters
 
@@ -75,3 +75,16 @@ Load order and precedence:
    * `PI_CODEX_IMAGE_SAVE_DIR`
 
 Supported `saveMode` values are `none`, `project`, `global`, and `custom`. If the resolved save mode is `custom`, either the config/env layer or the tool call must provide `saveDir`.
+
+## Save locations and result shape
+
+When wired into Pi, the save module resolves locations as follows:
+
+* `none`: no file is written;
+* `project`: `<cwd>/.pi/generated-images/<sanitized-session-id>/<sanitized-image-id>.<format>`;
+* `global`: `<agent-dir>/generated-images/<sanitized-session-id>/<sanitized-image-id>.<format>`;
+* `custom`: `<saveDir>/<sanitized-session-id>/<sanitized-image-id>.<format>`, with relative `saveDir` values resolved under the current workspace.
+
+Session ids and image-generation ids are sanitized before they become path parts. Image files are written through a temporary file in the target directory and then renamed into place.
+
+The formatted Pi result contains a concise text summary, one inline image content item with `image/png`, `image/jpeg`, or `image/webp`, and details such as provider, routing model, backend image model, output format, save mode, saved path, response id, image-generation id, revised prompt, and usage.

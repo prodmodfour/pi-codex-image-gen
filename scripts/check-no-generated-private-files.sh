@@ -54,6 +54,9 @@ for path in root.rglob('*'):
     if any(posix == prefix.rstrip('/') or posix.startswith(prefix) for prefix in forbidden_prefixes):
         violations.append(posix)
         continue
+    if '/generated-images/' in f'/{posix}/':
+        violations.append(posix)
+        continue
     if any(posix.endswith(suffix) for suffix in forbidden_suffixes):
         violations.append(posix)
         continue
