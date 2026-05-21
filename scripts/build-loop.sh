@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # shellcheck source=scripts/lib/pretty-print.sh
 source "$SCRIPT_DIR/lib/pretty-print.sh"
 # shellcheck source=scripts/lib/git-branch.sh
@@ -34,6 +35,11 @@ Options:
 --branch-start REF   Start point for --create-branch. Default: HEAD.
 --allow-template     Allow running if PROJECT_BRIEF.md is marked uncustomised.
 -h, --help           Show this help.
+
+Environment:
+PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR
+                      Override the state directory used for logs and lock files.
+                      Defaults under XDG_STATE_HOME, outside the repository.
 USAGE
 }
 
@@ -87,8 +93,10 @@ REQUIRED_FILES=(
   scripts/lib/git-branch.sh
 )
 
-LOG_DIR=".agent/logs/build-loop"
-LOCK_DIR=".agent/build-loop.lock"
+REPO_STATE_KEY="${REPO_ROOT//\//_}"
+BUILD_LOOP_STATE_DIR="${PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/pi-codex-image-gen/build-loop/$REPO_STATE_KEY}"
+LOG_DIR="$BUILD_LOOP_STATE_DIR/logs"
+LOCK_DIR="$BUILD_LOOP_STATE_DIR/lock"
 CYCLE_UPSTREAM_REF=""
 CYCLE_UPSTREAM_HEAD=""
 
@@ -263,6 +271,7 @@ while (( cycle < MAX_CYCLES )); do
   sync_before_cycle
 
   before_head="$(git rev-parse HEAD)"
+  mkdir -p "$LOG_DIR"
   log_file="$LOG_DIR/cycle-$(date +%Y%m%d-%H%M%S)-$cycle.log"
   pp_kv "Log file" "$log_file"
   pp_section "Agent run"

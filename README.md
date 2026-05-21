@@ -50,6 +50,8 @@ The default wrapper uses Pi:
 pi --no-session -p @AGENTS.md @PROJECT_BRIEF.md @BUILD_TICKETS.md @BUILD_NOTES.md "$PROMPT"
 ```
 
+Build-loop logs and lock files are kept outside the repository by default under `${XDG_STATE_HOME:-~/.local/state}/pi-codex-image-gen/build-loop/` so private runtime files do not interfere with repository guardrails. Set `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR=/path/to/state` to override this location.
+
 ## Local checks
 
 The non-live quality gate does not require Pi or Codex credentials:

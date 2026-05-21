@@ -96,6 +96,10 @@ Limitations/blockers:
 * The Pi tool registration still returns the skeleton not-implemented response until Ticket 004 wires validation, auth, client, saving, and formatting into the extension.
 * No live Codex request was made in this ticket; live validation remains reserved for Ticket 007.
 
+## Automation harness notes
+
+2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
+
 ## Last completed ticket
 
 Ticket 003 — Implement image save modes and Pi tool result formatting.
