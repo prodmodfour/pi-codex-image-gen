@@ -2,17 +2,17 @@ import {
   BACKEND_IMAGE_MODEL,
   CODEX_IMAGE_GEN_PROVIDER,
   CODEX_IMAGE_GEN_TOOL_NAME,
-} from "../constants.js";
+} from "../constants.ts";
 import {
   CODEX_IMAGE_GEN_TOOL_DESCRIPTION,
   CODEX_IMAGE_GEN_TOOL_PARAMETERS,
   type CodexImageGenToolInput,
-} from "../tool/codexImageGenApi.js";
+} from "../tool/codexImageGenApi.ts";
 import type {
   PiExtensionApi,
   PiToolDefinition,
   PiToolResult,
-} from "./piExtensionContract.js";
+} from "./piExtensionContract.ts";
 
 export const CODEX_IMAGE_GEN_TOOL_LABEL = "Codex Image" as const;
 export const CODEX_IMAGE_GEN_TOOL_PROMPT_SNIPPET =

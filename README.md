@@ -60,6 +60,26 @@ bash scripts/quality-gate.sh
 
 The live validation ticket intentionally uses real Pi/Codex auth when available. It may consume Codex/ChatGPT usage and must not commit generated images or logs.
 
+## Tool contract and configuration
+
+`codex_generate_image` accepts this stable public parameter set:
+
+| Parameter | Required | Values | Default |
+| --- | --- | --- | --- |
+| `prompt` | yes | non-empty string, max 8000 chars after trimming | none |
+| `model` | no | Codex routing model id | config default (`gpt-5.5` unless overridden) |
+| `outputFormat` | no | `png`, `jpeg`, `webp` | `png` |
+| `save` | no | `none`, `project`, `global`, `custom` | config default (`global` unless overridden) |
+| `saveDir` | only for custom saves without configured dir | directory string | config/env save dir |
+
+Config files are JSON objects with optional `model`, `saveMode`, and `saveDir` keys. Precedence is defaults, global config, project config, then environment overrides:
+
+* global: `~/.pi/agent/extensions/codex-image-gen.json`
+* project: `<cwd>/.pi/extensions/codex-image-gen.json`
+* env: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, `PI_CODEX_IMAGE_SAVE_DIR`
+
+The config loader validates bad values with structured, sanitized errors and does not read credential files.
+
 ## Important publishing caveat
 
 The requested unscoped package name is `pi-codex-image-gen`. That name appears to already exist publicly. The autonomous build should keep the local package name as requested, but release docs must mention that npm publishing may require package ownership, a scoped package name, or a private registry.

@@ -35,7 +35,7 @@ Required:
 
 ## 001 — Implement public tool API, validation, and config
 
-Status: TODO
+Status: DONE
 
 Implement the stable public contract for `codex_generate_image`.
 

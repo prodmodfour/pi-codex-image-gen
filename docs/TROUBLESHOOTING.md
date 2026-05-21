@@ -13,3 +13,17 @@ Expected topics:
 * `save=custom` missing `saveDir`;
 * generated image not found;
 * package-name publishing conflict.
+
+## Config validation errors
+
+The config loader reads only:
+
+* `~/.pi/agent/extensions/codex-image-gen.json`
+* `<cwd>/.pi/extensions/codex-image-gen.json`
+* `PI_CODEX_IMAGE_MODEL`
+* `PI_CODEX_IMAGE_SAVE_MODE`
+* `PI_CODEX_IMAGE_SAVE_DIR`
+
+Config JSON must be an object with optional `model`, `saveMode`, and `saveDir` keys. `saveMode` must be one of `none`, `project`, `global`, or `custom`.
+
+If `save=custom` (or a resolved config default of `saveMode=custom`) is used, provide `saveDir` either in the tool call, config file, or `PI_CODEX_IMAGE_SAVE_DIR`.

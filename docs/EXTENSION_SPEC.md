@@ -38,6 +38,26 @@ description: Generate an image through Codex using existing openai-codex auth.
 
 The prompt guidelines must say to use it only for explicit image-generation requests.
 
+Public parameters:
+
+| Parameter | Required | Values/defaults |
+| --- | --- | --- |
+| `prompt` | yes | non-empty string, max 8000 chars after trimming |
+| `model` | no | configured Codex routing model, default `gpt-5.5` unless overridden |
+| `outputFormat` | no | `png`, `jpeg`, `webp`; default `png` |
+| `save` | no | `none`, `project`, `global`, `custom`; default `global` unless configured |
+| `saveDir` | conditional | required for custom save mode unless configured |
+
+## Config surface
+
+Config files are optional JSON objects with `model`, `saveMode`, and `saveDir` keys. Merge precedence is built-in defaults, global config, project config, then environment overrides.
+
+* global config: `~/.pi/agent/extensions/codex-image-gen.json`
+* project config: `<cwd>/.pi/extensions/codex-image-gen.json`
+* environment: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, `PI_CODEX_IMAGE_SAVE_DIR`
+
+Config loading must not read credential files.
+
 ## Auth provider
 
 Provider name:

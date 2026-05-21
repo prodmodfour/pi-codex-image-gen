@@ -6,6 +6,8 @@
 
 The extension must obtain credentials only from Pi's runtime model/provider API, specifically the `openai-codex` provider or the current equivalent.
 
+The config loader reads only the documented non-secret config files (`~/.pi/agent/extensions/codex-image-gen.json` and `<cwd>/.pi/extensions/codex-image-gen.json`) plus documented environment overrides for model/save defaults. These files must not contain tokens or private auth material.
+
 It must not:
 
 * read `~/.codex/auth.json`;

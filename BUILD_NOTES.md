@@ -42,9 +42,25 @@ Limitations/blockers:
 * No Codex backend, config loading, auth extraction, image saving, or real Pi execution is implemented yet; those remain scoped to later tickets.
 * Live validation has not been attempted and is reserved for Ticket 007.
 
+## Ticket 001 notes
+
+Completed public API/config work:
+
+* Implemented `src/tool/codexImageGenApi.ts` with tool constants, JSON-schema-compatible parameters, defaults, normalization, enum helpers, and structured sanitized validation errors.
+* Implemented `src/config/codexImageGenConfig.ts` for defaults, global config, project config, and env override loading. Precedence is built-in defaults, global config, project config, then environment.
+* Supported documented env overrides: `PI_CODEX_IMAGE_MODEL`, `PI_CODEX_IMAGE_SAVE_MODE`, and `PI_CODEX_IMAGE_SAVE_DIR`.
+* Added unit tests for input normalization, defaults, invalid values, custom-save validation, config file/env precedence, and config error reporting.
+* Updated README and docs for tool parameters, config paths, precedence, env overrides, and config/security caveats.
+* Switched local TypeScript source imports to `.ts` specifiers with `allowImportingTsExtensions` so Node 22's native TypeScript test runner can import the source modules directly without a build step.
+
+Limitations/blockers:
+
+* Codex auth extraction, request construction, SSE parsing, retries, image saving, and real Pi execution are still not implemented; those remain scoped to later tickets.
+* The default routing model is set to `gpt-5.5` based on the installed Pi model resolver source. Live image-generation validation has not been attempted and remains reserved for Ticket 007.
+
 ## Last completed ticket
 
-Ticket 000 — Confirm current assumptions and finish package skeleton.
+Ticket 001 — Implement public tool API, validation, and config.
 
 ## Last quality gates
 
@@ -52,4 +68,4 @@ Ticket 000 — Confirm current assumptions and finish package skeleton.
 
 ## Next recommended ticket
 
-Ticket 001 — Implement public tool API, validation, and config.
+Ticket 002 — Implement Codex auth, request construction, SSE parsing, and retries.
