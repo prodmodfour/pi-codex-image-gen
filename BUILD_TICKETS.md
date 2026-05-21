@@ -15,7 +15,7 @@ The build loop must select the lowest-numbered TODO or IN_PROGRESS ticket.
 
 ## 000 — Confirm current assumptions and finish package skeleton
 
-Status: TODO
+Status: DONE
 
 Review `PROJECT_BRIEF.md`, `docs/IMPLEMENTATION_GUIDE.md`, and the existing skeleton.
 

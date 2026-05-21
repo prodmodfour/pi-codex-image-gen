@@ -12,6 +12,8 @@
     "pi-extension",
     "pi-skill",
     "codex",
+    "openai-codex",
+    "codex-image-generation",
     "image-generation",
     "chatgpt"
   ],
