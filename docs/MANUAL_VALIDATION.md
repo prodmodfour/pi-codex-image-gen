@@ -21,7 +21,7 @@ Smoke script: npm run smoke:codex-image completed with the guarded skip message.
 Blocker if any: none.
 ```
 
-Ticket 007 must update this section with a sanitized PASS, FAIL, or BLOCKED summary.
+Ticket 007 updated this section with a sanitized PASS summary. Future live validation runs should replace the block above with the same PASS, FAIL, or BLOCKED format.
 
 ## Safety rules for validators
 

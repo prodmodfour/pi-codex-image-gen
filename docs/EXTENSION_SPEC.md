@@ -334,4 +334,4 @@ If Codex provides a safer public SDK or CLI image-generation method that uses th
 
 ## Live-validation status
 
-Ticket 007 must validate the frozen backend assumptions against a real authenticated Pi/Codex session. Until then, the backend request and stream contract is fake-tested and source/doc-verified, but not live-release-verified.
+Ticket 007 validated the frozen backend assumptions against a real authenticated Pi/Codex session on 2026-05-21. The live check observed inline PNG image results for `save=global` and `save=none`, confirmed a saved path for the global save, removed the generated test file after verification, and recorded only sanitized notes in [MANUAL_VALIDATION.md](MANUAL_VALIDATION.md).

@@ -211,18 +211,38 @@ Limitations/blockers:
 * No release was published and no package version was bumped; maintainer approval and package-name ownership/provenance are still required before public npm publishing.
 * The CI workflow is non-live only and intentionally does not validate real image generation.
 
+## Ticket 099 notes
+
+Completed final autonomous review:
+
+* Confirmed all numbered build tickets are DONE and no live-validation blocker remains.
+* Reviewed the project brief goals against package metadata, source modules, tests, docs, and the sanitized live-validation record.
+* Confirmed the package still declares `pi-codex-image-gen`, one primary Pi tool `codex_generate_image`, the `openai-codex` provider path, documented save modes, config precedence, inline image result formatting, and generated/private-file guardrails.
+* Confirmed the default runtime path has no OpenAI API-key dependency or `OPENAI_API_KEY` fallback, and source review found no server/proxy primitives that would expose a user's subscription as a public multi-user service.
+* Updated stale live-validation wording in `docs/EXTENSION_SPEC.md` and `docs/MANUAL_VALIDATION.md` so docs reflect Ticket 007's PASS result.
+* Set `AUTOMATION_STATUS: DONE` and marked Ticket 099 DONE in `BUILD_TICKETS.md`.
+
+Verification:
+
+* `bash scripts/quality-gate.sh` passed on 2026-05-21 after the final documentation/status updates.
+
+Limitations/blockers:
+
+* No blockers remain for autonomous completion.
+* Public npm publishing is still intentionally not performed and remains gated on maintainer approval plus package-name ownership/provenance.
+
 ## Automation harness notes
 
 2026-05-21 — Fixed the autonomous build-loop log/lock location. Earlier cycles wrote active logs under `.agent/logs/build-loop/`, while the repository guardrails and cleanup treat `.agent/` as private runtime state. If an agent removed `.agent/` to keep the tree clean, the next cycle's `tee` could fail with `No such file or directory` even after the ticket commit succeeded. The loop now stores logs and its lock under an external state directory by default, with `PI_CODEX_IMAGE_GEN_BUILD_LOOP_STATE_DIR` available as an override. Validation: `bash scripts/quality-gate.sh` passed.
 
 ## Last completed ticket
 
-Ticket 008 — Release readiness and repository polish.
+Ticket 099 — Final autonomous review and completion marker.
 
 ## Last quality gates
 
-2026-05-21 — `bash scripts/quality-gate.sh` passed after release-readiness polish.
+2026-05-21 — `bash scripts/quality-gate.sh` passed after final autonomous review updates.
 
 ## Next recommended ticket
 
-Ticket 099 — Final autonomous review and completion marker.
+None — automation is complete.

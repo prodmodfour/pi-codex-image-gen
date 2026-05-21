@@ -1,6 +1,6 @@
 # BUILD_TICKETS.md
 
-AUTOMATION_STATUS: IN_PROGRESS
+AUTOMATION_STATUS: DONE
 
 Ticket statuses:
 
@@ -225,7 +225,7 @@ Required:
 
 ## 099 — Final autonomous review and completion marker
 
-Status: TODO
+Status: DONE
 
 Perform final review.
 
